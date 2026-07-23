@@ -1,0 +1,22 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Dependencies (retrieve/build, don't track)
+vendor/
+node_modules/
+
+# Vendor asset bloat — belongs in a build step or CDN, not VCS
+public/asset/
+
+# Media — audio is large and mostly duplicated; keep out of VCS
+*.mp3
+
+# The 50 MB production dump — use db/schema.sql + db/seed-sample.sql instead
+bettery1_biblediary_godsword.sql
+*.sql.gz
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
