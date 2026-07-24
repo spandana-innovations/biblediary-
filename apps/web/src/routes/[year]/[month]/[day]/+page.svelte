@@ -181,10 +181,11 @@
   .meta .sea { color: var(--season-ink); font-weight: 600; }
   .meta .dot { opacity: 0.5; }
   .daynav { display: flex; align-items: center; gap: 10px; margin-top: 1.5rem; }
-  .daynav a, .daynav span {
+  .daynav > a, .daynav > span {
     display: inline-grid; place-items: center; width: 42px; height: 42px; border-radius: 50%;
     border: 1px solid var(--hairline); color: var(--season-ink);
   }
+  .daynav .cal span { display: inline; width: auto; height: auto; border: 0; border-radius: 0; }
   .daynav .off { opacity: 0.3; }
   .daynav :global(svg) { width: 19px; height: 19px; }
   .daynav .cal {
