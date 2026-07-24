@@ -14,6 +14,7 @@
  * written until the whole dump parses, so a failed run leaves content intact.
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { gunzipSync } from "node:zlib";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -92,7 +93,9 @@ const unesc = (s) =>
         .replace(/\\\\/g, "\\");
 
 console.log(`[import] reading ${dumpPath}`);
-const sql = readFileSync(dumpPath, "utf8");
+// Dumps are usually handed over gzipped — SQL compresses roughly 10:1.
+const raw = readFileSync(dumpPath);
+const sql = (raw[0] === 0x1f && raw[1] === 0x8b ? gunzipSync(raw) : raw).toString("utf8");
 
 // Column order comes from the CREATE TABLE block.
 const createRe = new RegExp("CREATE TABLE `?" + TABLE + "`?\\s*\\(([\\s\\S]*?)\\n\\)\\s*ENGINE", "i");
