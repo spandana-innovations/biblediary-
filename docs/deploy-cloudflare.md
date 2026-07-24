@@ -1,9 +1,35 @@
-# Deploying to Cloudflare Pages
+# Deploying to Cloudflare
 
 The build defaults to the **India** edition at a **root** base path when no env
-vars are set — which is exactly what Cloudflare Pages serves (a domain root, not
-the `/biblediary-/` subpath GitHub Pages forces). So the Pages project needs
-almost no configuration.
+vars are set — exactly what a Cloudflare root domain serves (not the
+`/biblediary-/` subpath GitHub Pages forces). **Do not set `BASE_PATH`** on
+Cloudflare, or assets 404.
+
+## Option A — Worker with static assets (`*.workers.dev`)
+
+`wrangler.jsonc` at the repo root configures an **assets-only Worker** (no
+server code) that serves `apps/web/build`. In the Worker's
+**Settings → Builds** (Git-connected Workers Builds):
+
+| Setting | Value |
+|---|---|
+| Production branch | `main` |
+| Build command | `pnpm build` |
+| Deploy command | `npx wrangler deploy` |
+| Root directory | *(blank — repo root)* |
+
+`wrangler deploy` reads `wrangler.jsonc` and uploads the built assets.
+`not_found_handling: "404-page"` serves the generated `404.html` for unknown
+paths. The Worker `name` must match the existing Worker (`biblediary`) so it
+updates in place rather than creating a new one.
+
+> The default "Hello World" Worker means the build/deploy wasn't wired to this
+> repo yet — set the build + deploy commands above and redeploy.
+
+## Option B — Cloudflare Pages (`*.pages.dev`)
+
+The build defaults to the India edition at a root base path when no env vars are
+set — which is exactly what Cloudflare Pages serves.
 
 ## Cloudflare Pages build settings (dashboard)
 

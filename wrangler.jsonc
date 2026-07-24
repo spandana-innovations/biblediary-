@@ -1,0 +1,12 @@
+{
+  // Cloudflare Worker serving the prerendered SvelteKit site as static assets.
+  // No `main` entrypoint → this is an assets-only Worker (no server code).
+  // The Workers build must run `pnpm build` first to produce apps/web/build.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "biblediary",
+  "compatibility_date": "2026-07-24",
+  "assets": {
+    "directory": "./apps/web/build",
+    "not_found_handling": "404-page"
+  }
+}
