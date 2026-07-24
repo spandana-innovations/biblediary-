@@ -1,0 +1,33 @@
+name: Deploy to Cloudflare
+
+# Builds the static site and deploys it to the Cloudflare Worker via Wrangler
+# (reads wrangler.jsonc — assets-only). This is a Cloudflare deployment, just
+# orchestrated from CI so each deploy is logged and verifiable. It only runs the
+# deploy step when the CLOUDFLARE_API_TOKEN secret is present, so it never fails
+# noisily if you'd rather rely on Cloudflare's own Git-connected builds.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Deploy to Cloudflare (Wrangler)
+        if: ${{ env.CF_TOKEN != '' }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy

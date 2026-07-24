@@ -111,9 +111,31 @@ function collection(subdir) {
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 }
 
-emitted.push(write("prayers.json", { items: collection("prayers") }));
-emitted.push(write("hymns.json", { items: collection("hymns") }));
-emitted.push(write("order-of-mass.json", { items: collection("order-of-mass") }));
+const prayers = collection("prayers");
+const hymns = collection("hymns");
+const orderOfMass = collection("order-of-mass");
+emitted.push(write("prayers.json", { items: prayers }));
+emitted.push(write("hymns.json", { items: hymns }));
+emitted.push(write("order-of-mass.json", { items: orderOfMass }));
+
+// ---- Search index ---------------------------------------------------------
+const strip = (s) => (s ?? "").replace(/<[^>]+>/g, " ").replace(/[*_#>`]/g, " ").replace(/\s+/g, " ").trim();
+const searchItems = [];
+for (const doc of dayDocs) {
+  const d = doc.data;
+  const text = (d.sections ?? []).map((s) => `${s.title} ${s.ref ?? ""} ${s.body ?? ""}`).join(" ");
+  searchItems.push({
+    type: "Reading",
+    title: d.celebration ?? String(d.date),
+    sub: String(d.date),
+    text: strip(text),
+    url: `${String(d.date).replaceAll("-", "/")}/`
+  });
+}
+for (const p of prayers) searchItems.push({ type: "Prayer", title: p.title, sub: p.category ?? "", text: strip(p.body), url: "prayers/" });
+for (const h of hymns) searchItems.push({ type: "Hymn", title: h.title, sub: h.composer ?? "", text: h.title, url: "hymns/" });
+for (const o of orderOfMass) searchItems.push({ type: "Order of Mass", title: o.title, sub: "", text: strip(o.body), url: "order-of-mass/" });
+emitted.push(write("search.json", { items: searchItems }));
 
 // ---- Index + manifest -----------------------------------------------------
 emitted.push(

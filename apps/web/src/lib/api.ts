@@ -75,7 +75,16 @@ async function getJson<T>(fetchFn: typeof fetch, path: string): Promise<T> {
   return res.json();
 }
 
+export interface SearchItem {
+  type: string;
+  title: string;
+  sub: string;
+  text: string;
+  url: string;
+}
+
 export const getIndex = (f: typeof fetch) => getJson<ApiIndex>(f, "index.json");
+export const getSearch = (f: typeof fetch) => getJson<{ items: SearchItem[] }>(f, "search.json").then((r) => r.items);
 export const getDay = (f: typeof fetch, date: string) => getJson<Day>(f, `days/${date}.json`);
 export const getCollection = (f: typeof fetch, name: string) =>
   getJson<{ items: CollectionItem[] }>(f, `${name}.json`).then((r) => r.items);

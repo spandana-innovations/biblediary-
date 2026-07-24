@@ -33,11 +33,21 @@
     { href: `${base}/hymns/`, label: "Popular Hymns", icon: icons.note },
     { href: `${base}/prayers/`, label: "Prayer Collection", icon: icons.beads },
     { href: `${base}/homily/`, label: "Homily Tips", icon: icons.quote },
+    { href: `${base}/calendar/`, label: "Calendar", icon: icons.calendar },
+    { href: `${base}/search/`, label: "Search", icon: icons.search },
     { href: `${base}/about/`, label: "About Us", icon: icons.info }
   ]);
   const path = $derived($page.url.pathname);
   const isActive = (href: string) => href !== `${base}/` && path.startsWith(href);
+  const onHome = $derived(path === `${base}/` || path === `${base}`);
 </script>
+
+{#if onHome}
+  <div class="quick-actions">
+    <a href="{base}/search/" aria-label="Search">{@html icons.search}</a>
+    <a href="{base}/calendar/" aria-label="Calendar">{@html icons.calendar}</a>
+  </div>
+{/if}
 
 <button class="theme-toggle" onclick={toggle} aria-label="Toggle light or dark theme">
   <span class="tt-ic">{@html dark ? icons.sun : icons.moon}</span>

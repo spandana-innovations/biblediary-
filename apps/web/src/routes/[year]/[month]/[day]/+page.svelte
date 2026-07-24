@@ -19,6 +19,32 @@
   const html = $derived(renderBody(section?.body ?? ""));
   const dropcap = $derived(!/^\s*<(span|strong|em)/i.test(section?.body ?? ""));
 
+  // Text-to-speech (Web Speech API) — read the current section aloud.
+  let speaking = $state(false);
+  const plain = (md: string) =>
+    (md ?? "").replace(/<[^>]+>/g, " ").replace(/[*_#>`]/g, " ").replace(/\s+/g, " ").trim();
+  function toggleSpeak() {
+    const synth = typeof window !== "undefined" ? window.speechSynthesis : null;
+    if (!synth) return;
+    if (speaking) {
+      synth.cancel();
+      speaking = false;
+      return;
+    }
+    const u = new SpeechSynthesisUtterance(`${section?.title ?? ""}. ${plain(section?.body ?? "")}`);
+    u.onend = () => (speaking = false);
+    u.onerror = () => (speaking = false);
+    synth.cancel();
+    synth.speak(u);
+    speaking = true;
+  }
+  // Stop speech when switching sections.
+  $effect(() => {
+    void sel;
+    if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
+    speaking = false;
+  });
+
   const WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const MON = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   function pretty(d: string): string {
@@ -63,6 +89,9 @@
       <div class="ref">{section?.ref ?? section?.title}</div>
       <div class="mini-actions">
         {#if section?.audio}<audio controls preload="none" src={section.audio}></audio>{/if}
+        <button class="mini-btn" class:on={speaking} aria-label={speaking ? "Stop" : "Listen"} onclick={toggleSpeak}>
+          {@html speaking ? icons.stop : icons.sound}
+        </button>
         <button class="mini-btn" aria-label="Text size">{@html icons.textsize}</button>
         <button class="mini-btn" aria-label="Share reading">{@html icons.share}</button>
       </div>
@@ -108,6 +137,7 @@
   }
   .mini-btn :global(svg) { width: 18px; height: 18px; }
   .mini-btn:hover { background: var(--hairline); }
+  .mini-btn.on { background: var(--brand); color: #fff; border-color: transparent; }
   .dropcap :global(p:first-child)::first-letter {
     font-family: var(--font-display); font-size: 3rem; line-height: 0.78; float: left;
     padding: 5px 10px 0 0; font-weight: 800; color: var(--brand);

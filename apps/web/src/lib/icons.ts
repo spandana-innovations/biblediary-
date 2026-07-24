@@ -22,6 +22,9 @@ export const icons = {
   prev: s(`<path d="M15 6l-6 6 6 6"/>`),
   next: s(`<path d="M9 6l6 6-6 6"/>`),
   calendar: s(`<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M8 3v4M16 3v4"/>`),
+  search: s(`<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>`),
+  sound: s(`<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12"/>`),
+  stop: s(`<rect x="6" y="6" width="12" height="12" rx="2.5"/>`),
   sun: s(`<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M5 12H3M21 12h-2M6 6l1.5 1.5M16.5 16.5L18 18M6 18l1.5-1.5M16.5 7.5L18 6"/>`),
   moon: s(`<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>`)
 };

@@ -118,6 +118,17 @@ a { color: inherit; text-decoration: none; }
 .theme-toggle .tt-ic { display: grid; }
 .theme-toggle .tt-ic svg { width: 15px; height: 15px; }
 .theme-toggle:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* Mobile quick actions (home only) — search + calendar, top-left. */
+.quick-actions { position: fixed; top: 14px; left: 14px; z-index: 50; display: flex; gap: 8px; }
+.quick-actions a {
+  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--sheet); color: var(--text); border: 1px solid rgba(140, 120, 118, 0.35);
+  box-shadow: var(--shadow-md);
+}
+.quick-actions a svg { width: 19px; height: 19px; }
+@media (min-width: 960px) { .quick-actions { display: none; } }
+
 .brand .mark { display: grid; color: var(--brand); }
 .brand .mark svg { width: 100%; height: 100%; }
 
@@ -275,5 +286,14 @@ a { color: inherit; text-decoration: none; }
   }
   .app .home svg { max-width: 520px; }
 }
+
+/* ---------- Liturgical colour theming (REBUILD_PLAN §8.2) ----------
+   The day view sets data-season on its <article>; these override the header
+   gradient so the banner reflects the season. Feasts/martyrs keep brand red
+   (the :root default), so no override is needed for them. */
+[data-season="ordinary"] { --hdr-top: #47a978; --hdr-bottom: #1f7a4d; }
+[data-season="lent"], [data-season="advent"] { --hdr-top: #7a5ccc; --hdr-bottom: #4a2c98; }
+[data-season="easter"], [data-season="christmas"] { --hdr-top: #e0a948; --hdr-bottom: #a9761a; }
+[data-season="gaudete"], [data-season="laetare"] { --hdr-top: #e587a3; --hdr-bottom: #c65f7f; }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
