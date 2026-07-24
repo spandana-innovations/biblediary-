@@ -1,14 +1,11 @@
-name: Deploy preview to GitHub Pages
+name: Deploy site to GitHub Pages
 
-# Publishes preview/ to a gh-pages branch via a plain git push. This avoids the
-# github-pages *environment* (whose default branch-protection blocks deploys
-# from non-default branches). Pages then serves from the gh-pages branch.
+# Builds the SvelteKit app (India edition) with the project base path and
+# publishes the static output to the gh-pages branch. Avoids the github-pages
+# environment (whose branch protection blocks non-default branches).
 on:
   push:
     branches: [claude/new-session-7dcvwk, main]
-    paths:
-      - "preview/**"
-      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -19,22 +16,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  publish:
+  build-and-publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Publish preview/ to gh-pages branch
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build static site + JSON API
+        env:
+          EDITION: in
+          VITE_EDITION: in
+          BASE_PATH: /biblediary-
+        run: pnpm build
+      - name: Publish apps/web/build to gh-pages
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          work="$(mktemp -d)"
-          cp preview/index.html "$work/index.html"
-          touch "$work/.nojekyll"      # skip Jekyll; serve files as-is
-          cd "$work"
+          cd apps/web/build
+          touch .nojekyll        # keep _app/ (Jekyll would strip underscore dirs)
           git init -q -b gh-pages
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -q -m "Deploy preview ${GITHUB_SHA}"
+          git commit -q -m "Deploy site ${GITHUB_SHA}"
           git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages

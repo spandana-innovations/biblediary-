@@ -1,9 +1,10 @@
 import { marked } from "marked";
+import { base } from "$app/paths";
 
 /**
- * Thin typed access to the static JSON API produced by scripts/build-api.mjs.
- * Pages fetch it during prerender (SvelteKit serves static assets to the
- * prerenderer), so the site and the PWA/service-worker share one source.
+ * Typed access to the static JSON API produced by scripts/build-api.mjs.
+ * Paths are prefixed with the SvelteKit base so the app works under a project
+ * subpath on GitHub Pages (e.g. /biblediary-/).
  */
 export interface Section {
   key: string;
@@ -39,19 +40,28 @@ export interface ApiIndex {
   setting: { forceUpdate: boolean };
 }
 
+export interface CollectionItem {
+  title: string;
+  slug?: string;
+  category?: string;
+  order?: number;
+  audio: string | null;
+  body: string;
+  [k: string]: unknown;
+}
+
 /** Render an authored markdown body to HTML, preserving inline semantic spans. */
 export function renderBody(md: string): string {
-  return marked.parse(md, { async: false }) as string;
+  return marked.parse(md ?? "", { async: false }) as string;
 }
 
-export async function getIndex(fetchFn: typeof fetch): Promise<ApiIndex> {
-  const res = await fetchFn("/api/v1/index.json");
-  if (!res.ok) throw new Error(`index.json ${res.status}`);
+async function getJson<T>(fetchFn: typeof fetch, path: string): Promise<T> {
+  const res = await fetchFn(`${base}/api/v1/${path}`);
+  if (!res.ok) throw new Error(`${path} ${res.status}`);
   return res.json();
 }
 
-export async function getDay(fetchFn: typeof fetch, date: string): Promise<Day> {
-  const res = await fetchFn(`/api/v1/days/${date}.json`);
-  if (!res.ok) throw new Error(`day ${date} ${res.status}`);
-  return res.json();
-}
+export const getIndex = (f: typeof fetch) => getJson<ApiIndex>(f, "index.json");
+export const getDay = (f: typeof fetch, date: string) => getJson<Day>(f, `days/${date}.json`);
+export const getCollection = (f: typeof fetch, name: string) =>
+  getJson<{ items: CollectionItem[] }>(f, `${name}.json`).then((r) => r.items);

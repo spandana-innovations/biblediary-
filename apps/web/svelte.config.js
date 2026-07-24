@@ -8,6 +8,10 @@ const config = {
     adapter: adapter({
       fallback: "404.html"
     }),
+    // Set BASE_PATH=/biblediary- in CI for GitHub project Pages; empty locally.
+    paths: {
+      base: process.env.BASE_PATH || ""
+    },
     alias: {
       $editions: fileURLToPath(new URL("../../editions", import.meta.url))
     },
