@@ -1,7 +1,7 @@
 <script lang="ts">
+  import { base } from "$app/paths";
   import { renderBody } from "$lib/api";
   import { icons } from "$lib/icons";
-  import { mass, toggleMass } from "$lib/massMode.svelte";
   import { onMount } from "svelte";
 
   let { data } = $props();
@@ -35,10 +35,8 @@
   <header class="ohead">
     <p class="eyebrow">The Roman Missal</p>
     <h1>Order of Mass</h1>
-    <p class="lede">The Mass unfolds as a dialogue — the celebrant’s words in <span class="ck">red</span>, the people’s response set in <strong>bold</strong>, the rubrics in <em>italic</em>. Enter Mass Mode to keep the screen awake and the type large.</p>
-    <button class="massbtn" class:on={mass.active} onclick={toggleMass}>
-      {@html icons.candle}<span>{mass.active ? "Exit Mass Mode" : "Mass Mode"}</span>
-    </button>
+    <p class="lede">The Mass unfolds as a dialogue — the celebrant’s words in <span class="ck">red</span>, the people’s response set in <strong>bold</strong>, the rubrics in <em>italic</em>.</p>
+    <a class="massbtn" href="{base}/mass/">{@html icons.cross}<span>Today’s Mass readings</span></a>
   </header>
 
   <div class="ordo-grid">
@@ -69,6 +67,7 @@
   .lede { font-family: var(--font-body); color: var(--muted); font-size: 1.05rem; line-height: 1.6; margin: 0 0 20px; max-width: 40rem; }
   .lede .ck { color: var(--brand-red); font-weight: 600; }
   .massbtn {
+    text-decoration: none;
     display: inline-flex; align-items: center; gap: 9px; cursor: pointer;
     font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.72rem; font-weight: 600;
     padding: 10px 18px; border-radius: 999px; border: 1px solid var(--season-ink); color: var(--season-ink); background: transparent;

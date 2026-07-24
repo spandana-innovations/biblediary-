@@ -1,0 +1,11 @@
+---
+type: prayer
+category: Common Prayers
+title: Prayer to Saint Michael
+slug: st-michael
+order: 16
+audio: null
+---
+Saint Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil.
+
+May God rebuke him, we humbly pray; and do thou, O Prince of the heavenly host, by the power of God, cast into hell Satan and all the evil spirits who prowl about the world seeking the ruin of souls. Amen.

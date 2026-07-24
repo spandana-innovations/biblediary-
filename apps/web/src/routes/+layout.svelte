@@ -10,11 +10,23 @@
   import Player from "$lib/Player.svelte";
   import VerseCard from "$lib/VerseCard.svelte";
   import CommandPalette from "$lib/CommandPalette.svelte";
+  import SettingsPanel from "$lib/SettingsPanel.svelte";
+  import Splash from "$lib/Splash.svelte";
   import { openPalette } from "$lib/palette.svelte";
-  import { mass, toggleMass } from "$lib/massMode.svelte";
+  import { mass } from "$lib/massMode.svelte";
+  import { loadSettings, openSettings, settings, cycleTheme, isDark } from "$lib/settings.svelte";
 
   let { data, children } = $props();
   let dark = $state(false);
+
+  onMount(() => {
+    loadSettings();
+    dark = isDark();
+  });
+  function toggleTheme() {
+    cycleTheme();
+    dark = isDark();
+  }
 
   // Cross-fade between pages via the View Transitions API (progressive; a no-op
   // where unsupported or when the user prefers reduced motion).
@@ -29,22 +41,6 @@
     });
   });
 
-  onMount(() => {
-    const saved = localStorage.getItem("theme");
-    if (saved === "dark" || saved === "light") {
-      document.documentElement.setAttribute("data-theme", saved);
-      dark = saved === "dark";
-    } else {
-      dark = matchMedia("(prefers-color-scheme: dark)").matches;
-    }
-  });
-  function toggle() {
-    dark = !dark;
-    const t = dark ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", t);
-    localStorage.setItem("theme", t);
-  }
-
   // Theme engine: the whole shell reflects the day being read.
   const dayData = $derived($page.data.day as { season?: string; liturgicalColor?: string; celebration?: string } | undefined);
   const season = $derived(dayData ? seasonToken(dayData.season, dayData.liturgicalColor, dayData.celebration) : "neutral");
@@ -58,32 +54,27 @@
   }
 
   const nav = $derived([
-    { href: todayHref, label: "Today", icon: icons.book, key: "today" },
+    { href: todayHref, label: "Readings", icon: icons.book, key: "readings" },
+    { href: `${base}/mass/`, label: "Mass", icon: icons.cross, key: "mass" },
+    { href: `${base}/saint/`, label: "Saint", icon: icons.saint, key: "saint" },
     { href: `${base}/order-of-mass/`, label: "Order of Mass", icon: icons.church, key: "order-of-mass" },
-    { href: `${base}/homily/`, label: "Homily", icon: icons.quote, key: "homily" },
     { href: `${base}/hymns/`, label: "Hymns", icon: icons.note, key: "hymns" },
     { href: `${base}/prayers/`, label: "Prayers", icon: icons.beads, key: "prayers" },
     { href: `${base}/calendar/`, label: "Calendar", icon: icons.calendar, key: "calendar" },
-    { href: `${base}/search/`, label: "Search", icon: icons.search, key: "search" },
-    { href: `${base}/about/`, label: "About", icon: icons.info, key: "about" }
-  ]);
-  const tabs = $derived([
-    { href: todayHref, label: "Today", icon: icons.book, key: "today" },
-    { href: `${base}/order-of-mass/`, label: "Mass", icon: icons.church, key: "order-of-mass" },
-    { href: `${base}/hymns/`, label: "Hymns", icon: icons.note, key: "hymns" },
-    { href: `${base}/prayers/`, label: "Prayers", icon: icons.beads, key: "prayers" },
-    { href: `${base}/calendar/`, label: "Calendar", icon: icons.calendar, key: "calendar" }
+    { href: `${base}/search/`, label: "Search", icon: icons.search, key: "search" }
   ]);
 
   const path = $derived($page.url.pathname);
   const activeKey = $derived.by(() => {
-    if (/\/\d{4}\/\d{2}\/\d{2}\//.test(path)) return "today";
-    for (const k of ["order-of-mass", "homily", "hymns", "prayers", "calendar", "search", "about"]) {
+    if (/\/\d{4}\/\d{2}\/\d{2}\//.test(path)) return "readings";
+    for (const k of ["mass", "saint", "order-of-mass", "homily", "hymns", "prayers", "calendar", "search", "about"]) {
       if (path.includes(`/${k}/`)) return k;
     }
     return "";
   });
 </script>
+
+<Splash />
 
 <a class="skip" href="#main">Skip to readings</a>
 
@@ -97,7 +88,7 @@
     {/each}
     <div class="rail-foot">
       <span class="fdate">{fdate()}{season !== "neutral" ? ` · ${seasonLabel(season)}` : ""}</span>
-      <span class="fed">{data.index?.edition?.country} · {data.index?.edition?.translation}</span>
+      <span class="fed">{data.index?.edition?.country}{settings.priestMode ? " · Priest mode" : ""}</span>
     </div>
   </nav>
 
@@ -105,10 +96,23 @@
     {@render children()}
   </main>
 
+  <!-- Mobile tab bar: Mass sits in the centre as a wide cross button. -->
   <nav class="tabbar" aria-label="Sections">
-    {#each tabs as t}
-      <a class:active={activeKey === t.key} href={t.href}><span class="ic">{@html t.icon}</span>{t.label}</a>
-    {/each}
+    <a class:active={activeKey === "readings"} href={todayHref}>
+      <span class="ic">{@html icons.book}</span>Readings
+    </a>
+    <a class:active={activeKey === "saint"} href="{base}/saint/">
+      <span class="ic">{@html icons.saint}</span>Saint
+    </a>
+    <a class="tab-mass" class:active={activeKey === "mass"} href="{base}/mass/" aria-label="Mass Mode">
+      <span class="mass-pill"><span class="ic">{@html icons.cross}</span><span class="ml">Mass</span></span>
+    </a>
+    <a class:active={activeKey === "hymns"} href="{base}/hymns/">
+      <span class="ic">{@html icons.note}</span>Hymns
+    </a>
+    <a class:active={activeKey === "prayers"} href="{base}/prayers/">
+      <span class="ic">{@html icons.beads}</span>Prayers
+    </a>
   </nav>
 
   <Player />
@@ -116,11 +120,10 @@
 
 <CommandPalette />
 <VerseCard />
+<SettingsPanel />
 
 <div class="controls">
-  {#if mass.active}
-    <button class="mass-exit" onclick={toggleMass} aria-label="Exit Mass Mode">{@html icons.close}<span>Exit Mass Mode</span></button>
-  {/if}
   <button onclick={openPalette} aria-label="Search (⌘K)">{@html icons.search}</button>
-  <button onclick={toggle} aria-label="Toggle Compline (night) mode">{@html dark ? icons.sun : icons.moon}</button>
+  <button onclick={toggleTheme} aria-label="Toggle Compline (night) mode">{@html dark ? icons.sun : icons.moon}</button>
+  <button onclick={openSettings} aria-label="Settings">{@html icons.cog}</button>
 </div>

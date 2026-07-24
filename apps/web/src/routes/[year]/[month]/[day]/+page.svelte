@@ -6,11 +6,16 @@
   import { seasonToken, seasonLabel } from "$lib/liturgical";
   import { icons } from "$lib/icons";
   import { openCard } from "$lib/verseCard.svelte";
+  import { settings } from "$lib/settings.svelte";
 
   let { data } = $props();
   const day = $derived(data.day);
   const season = $derived(seasonToken(day.season, day.liturgicalColor, day.celebration));
-  const sections = $derived(day.sections);
+
+  /** Homily tips are a priest-mode extra; everything else always shows. */
+  const sections = $derived(
+    settings.priestMode ? day.sections : day.sections.filter((s: { key: string }) => s.key !== "homily")
+  );
 
   // Day navigation
   const dates = $derived((data.index?.dates ?? []) as string[]);
@@ -30,9 +35,15 @@
     `${parts(day.date).line}${day.psalterWeek ? ` · Psalter Week ${["I", "II", "III", "IV"][(day.psalterWeek - 1) % 4]}` : ""}`
   );
 
+  // reading-time estimate
+  const words = $derived(
+    sections.reduce((n: number, s: { body: string }) => n + (s.body ?? "").split(/\s+/).length, 0)
+  );
+  const minutes = $derived(Math.max(1, Math.round(words / 180)));
+
   const heading = $derived(day.celebration ?? parts(day.date).line);
   const desc = $derived(
-    `Readings for ${heading} (${parts(day.date).line}): first reading, responsorial psalm, gospel and reflection — ${day.translation}.`
+    `Readings for ${heading} (${parts(day.date).line}): first reading, responsorial psalm, gospel and reflection.`
   );
   const jsonLd = $derived(
     JSON.stringify({
@@ -46,12 +57,6 @@
       articleSection: season
     })
   );
-
-  // reading-time estimate
-  const words = $derived(
-    sections.reduce((n: number, s: { body: string }) => n + (s.body ?? "").split(/\s+/).length, 0)
-  );
-  const minutes = $derived(Math.max(1, Math.round(words / 180)));
 
   // drop-cap only on prose readings
   const DROPCAP = new Set(["first_reading", "second_reading", "gospel", "reflection"]);
@@ -79,7 +84,7 @@
     window.addEventListener("scroll", onScroll, { passive: true });
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.target && (e.target as HTMLElement).closest("input, textarea")) return;
+      if (e.target && (e.target as HTMLElement).closest("input, textarea, select")) return;
       if (e.key === "ArrowLeft" && prevHref) goto(prevHref);
       if (e.key === "ArrowRight" && nextHref) goto(nextHref);
     };
@@ -90,11 +95,28 @@
       window.removeEventListener("keydown", onKey);
     };
   });
+
   function scrollTo(key: string) {
-    document.getElementById(`s-${key}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const el = document.getElementById(`s-${key}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    active = key;
+    history.replaceState(null, "", `#s-${key}`);
   }
 
-  // per-section text-to-speech
+  /** Jump to any date via the native picker. */
+  function pickDate(e: Event) {
+    const v = (e.target as HTMLInputElement).value;
+    if (!v) return;
+    // Snap to the nearest day we actually hold.
+    const exact = dates.includes(v) ? v : null;
+    if (exact) return void goto(toHref(exact));
+    const t = Date.parse(v);
+    const near = [...dates].sort((a, b) => Math.abs(Date.parse(a) - t) - Math.abs(Date.parse(b) - t))[0];
+    if (near) goto(toHref(near));
+  }
+
+  // per-section text-to-speech (honours the voice settings)
   let speaking = $state("");
   const plain = (md: string) => (md ?? "").replace(/<[^>]+>/g, " ").replace(/[*_#>`]/g, " ").replace(/\s+/g, " ").trim();
   function speak(s: { key: string; title: string; body: string }) {
@@ -102,6 +124,9 @@
     if (!synth) return;
     if (speaking === s.key) { synth.cancel(); speaking = ""; return; }
     const u = new SpeechSynthesisUtterance(`${s.title}. ${plain(s.body)}`);
+    u.rate = settings.voiceRate;
+    const v = synth.getVoices().find((x) => x.voiceURI === settings.voiceURI);
+    if (v) u.voice = v;
     u.onend = () => (speaking = "");
     u.onerror = () => (speaking = "");
     synth.cancel();
@@ -125,26 +150,39 @@
 <div class="progress" style="transform: scaleX({progress})" aria-hidden="true"></div>
 
 <article>
+  <!-- Intro block: what today is. -->
   <header class="hero">
     <div class="plate">
       <p class="eyebrow">{eyebrow}</p>
-      <h1>{day.celebration ?? parts(day.date).line}</h1>
+      <h1>{heading}</h1>
       <p class="meta">
         {#if season !== "neutral"}<span class="sea">{seasonLabel(season)}</span>{/if}
-        <span class="dot">·</span><span>{day.translation}</span>
         <span class="dot">·</span><span>≈ {minutes} min</span>
+        {#if settings.priestMode}<span class="dot">·</span><span class="pm">Priest mode</span>{/if}
       </p>
-      <nav class="daynav" aria-label="Day">
-        {#if prevHref}<a href={prevHref} aria-label="Previous day">{@html icons.prev}</a>{:else}<span class="off">{@html icons.prev}</span>{/if}
-        <a class="cal" href="{base}/calendar/">{@html icons.calendar}<span>Calendar</span></a>
-        {#if nextHref}<a href={nextHref} aria-label="Next day">{@html icons.next}</a>{:else}<span class="off">{@html icons.next}</span>{/if}
-      </nav>
     </div>
   </header>
 
+  <!-- Date selector sits below the intro block. -->
+  <nav class="datebar" aria-label="Choose a day">
+    {#if prevHref}
+      <a href={prevHref} aria-label="Previous day">{@html icons.prev}<span>Prev</span></a>
+    {:else}<span class="off">{@html icons.prev}<span>Prev</span></span>{/if}
+
+    <label class="picker">
+      {@html icons.calendar}
+      <span class="pl">{parts(day.date).line}</span>
+      <input type="date" value={day.date} onchange={pickDate} aria-label="Jump to a date" />
+    </label>
+
+    {#if nextHref}
+      <a href={nextHref} aria-label="Next day"><span>Next</span>{@html icons.next}</a>
+    {:else}<span class="off"><span>Next</span>{@html icons.next}</span>{/if}
+  </nav>
+
   <div class="day">
     <div class="day-main reading">
-      {#each sections as s, i}
+      {#each sections as s, i (s.key)}
         <section id="s-{s.key}" data-sec={s.key} data-key={s.key}>
           {#if i > 0}<div class="leaf"><span class="g">❧</span></div>{/if}
           <div class="sec-top">
@@ -162,7 +200,7 @@
               >{@html icons.share}</button>
             </div>
           </div>
-          <div class="body" class:dropcap={hasDrop(s)}>{@html renderBody(s.body)}</div>
+          <div class="body" class:dropcap={hasDrop(s)} class:homily={s.key === "homily"}>{@html renderBody(s.body)}</div>
           {#if s.key === "reflection"}
             <p class="credit">— from the daily reflection</p>
           {/if}
@@ -171,7 +209,7 @@
     </div>
 
     <aside class="day-rail" aria-label="Sections">
-      {#each sections as s}
+      {#each sections as s (s.key)}
         <button class:on={active === s.key} onclick={() => scrollTo(s.key)}>{s.title}</button>
       {/each}
     </aside>
@@ -188,7 +226,7 @@
   /* ---- book-plate hero ---- */
   .hero {
     background: linear-gradient(180deg, color-mix(in srgb, var(--season-deep) 12%, var(--season-wash)), var(--season-wash));
-    padding: clamp(40px, 8vw, 92px) clamp(20px, 5vw, 60px) clamp(28px, 5vw, 48px);
+    padding: clamp(40px, 8vw, 92px) clamp(20px, 5vw, 60px) clamp(24px, 4vw, 40px);
   }
   .plate {
     max-width: 52rem; margin: 0 auto; position: relative;
@@ -208,25 +246,35 @@
     display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
   }
   .meta .sea { color: var(--season-ink); font-weight: 600; }
+  .meta .pm { color: var(--season-gold); font-weight: 600; }
   .meta .dot { opacity: 0.5; }
-  .daynav { display: flex; align-items: center; gap: 10px; margin-top: 1.5rem; }
-  .daynav > a, .daynav > span {
-    display: inline-grid; place-items: center; width: 42px; height: 42px; border-radius: 50%;
-    border: 1px solid var(--hairline); color: var(--season-ink);
+
+  /* ---- date selector, below the intro ---- */
+  .datebar {
+    display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+    max-width: 52rem; margin: 0 auto; padding: 18px clamp(20px, 5vw, 60px) 0;
   }
-  .daynav .cal span { display: inline; width: auto; height: auto; border: 0; border-radius: 0; }
-  .daynav .off { opacity: 0.3; }
-  .daynav :global(svg) { width: 19px; height: 19px; }
-  .daynav .cal {
-    width: auto; border-radius: 999px; padding: 0 16px; gap: 8px; grid-auto-flow: column;
-    font-family: var(--font-ui); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;
+  .datebar a, .datebar .off, .picker {
+    display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 16px;
+    border: 1px solid var(--hairline); border-radius: 999px; color: var(--season-ink);
+    font-family: var(--font-ui); font-size: 0.74rem; text-transform: uppercase;
+    letter-spacing: 0.08em; font-weight: 600;
   }
+  .datebar .off { opacity: 0.35; }
+  .datebar :global(svg) { width: 17px; height: 17px; }
+  .picker { position: relative; cursor: pointer; color: var(--ink); text-transform: none; letter-spacing: 0.01em; font-size: 0.85rem; }
+  .picker .pl { white-space: nowrap; }
+  .picker input {
+    position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer;
+    border: 0; padding: 0;
+  }
+  .picker:hover { border-color: var(--season-ink); }
 
   /* ---- reading layout ---- */
   .day {
     display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, var(--measure)) minmax(0, 1fr);
     gap: 0 40px; max-width: 78rem; margin: 0 auto;
-    padding: clamp(28px, 5vw, 56px) clamp(20px, 5vw, 40px) 100px;
+    padding: clamp(24px, 4vw, 48px) clamp(20px, 5vw, 40px) 100px;
   }
   .day-main { grid-column: 2; max-width: var(--measure); }
   .day-rail { grid-column: 3; position: sticky; top: 68px; align-self: start; display: grid; gap: 2px; padding-right: 4px; }
@@ -237,7 +285,7 @@
   }
   .day-rail button.on { color: var(--season-ink); border-left-color: var(--season-ink); }
 
-  section { scroll-margin-top: 20px; }
+  section { scroll-margin-top: 24px; }
   .sec-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
   .label {
     font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.72rem;
@@ -245,11 +293,12 @@
   }
   .label .xmark { color: var(--season-gold); }
   .ref { font-variant-caps: all-small-caps; letter-spacing: 0.04em; color: var(--muted); margin: 0.15rem 0 0; font-size: 1rem; }
+  .sec-act { display: flex; gap: 6px; }
   .sec-act button {
     width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--hairline); background: none;
     color: var(--muted); display: grid; place-items: center; cursor: pointer; opacity: 0.6; transition: opacity 0.15s;
   }
-  section:hover .sec-act button { opacity: 1; }
+  section:hover .sec-act button, .sec-act button:focus-visible { opacity: 1; }
   .sec-act button :global(svg) { width: 16px; height: 16px; }
 
   .body { margin-top: 0.9rem; font-size: var(--text-reading); line-height: var(--leading-reading); }
@@ -259,6 +308,11 @@
     font-family: var(--font-display); font-weight: 560; color: var(--season-ink);
     -webkit-initial-letter: 3; initial-letter: 3; float: left; line-height: 0.8;
     padding-right: 0.08em; margin-top: 0.05em;
+  }
+  /* homily tips (priest mode) read as a marginal note */
+  .body.homily {
+    border-left: 2px solid color-mix(in srgb, var(--season-gold) 55%, transparent);
+    padding-left: 18px;
   }
   /* Psalm response set apart */
   section[data-key="responsorial_psalm"] .body :global(strong) {

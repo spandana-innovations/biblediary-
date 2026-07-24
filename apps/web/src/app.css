@@ -17,7 +17,9 @@
   --font-body: "Newsreader", Georgia, "Times New Roman", serif;
   --font-ui: "InterVar", system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --text-reading: clamp(1.125rem, 1rem + 0.5vw, 1.3125rem);
+  /* User text-size preference (Settings → Text size) scales all reading copy. */
+  --font-scale: 1;
+  --text-reading: calc(clamp(1.125rem, 1rem + 0.5vw, 1.3125rem) * var(--font-scale));
   --leading-reading: 1.75;
   --measure: 66ch;
 
@@ -145,10 +147,10 @@ a { color: inherit; text-decoration: none; }
   .rail { position: sticky; top: 0; height: 100dvh; border-right: 1px solid var(--hairline); }
 }
 
-/* mobile bottom tab bar */
+/* mobile bottom tab bar — Mass sits centre, double width, as a cross pill */
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
-  display: grid; grid-template-columns: repeat(5, 1fr);
+  display: grid; grid-template-columns: 1fr 1fr 2fr 1fr 1fr; align-items: end;
   background: color-mix(in srgb, var(--paper) 88%, var(--season-wash));
   border-top: 1px solid var(--hairline); backdrop-filter: blur(8px);
   padding-bottom: env(safe-area-inset-bottom);
@@ -160,8 +162,24 @@ a { color: inherit; text-decoration: none; }
 }
 .tabbar a .ic svg { width: 21px; height: 21px; }
 .tabbar a.active { color: var(--season-ink); }
+
+.tabbar .tab-mass { padding: 0 8px 8px; }
+.mass-pill {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; margin-top: -16px; padding: 12px 10px; border-radius: 999px;
+  background: var(--season-ink); color: var(--paper);
+  box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--season-deep) 70%, transparent);
+}
+.mass-pill .ic { display: grid; }
+.mass-pill .ic svg { width: 22px; height: 22px; stroke-width: 2; }
+.mass-pill .ml {
+  font-family: var(--font-ui); font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+}
+.tabbar .tab-mass.active .mass-pill { background: var(--season-deep); }
+
 @media (min-width: 1024px) { .tabbar { display: none; } }
-@media (max-width: 1023px) { .content { padding-bottom: 68px; } .rail { display: none; } }
+@media (max-width: 1023px) { .content { padding-bottom: 76px; } .rail { display: none; } }
 
 /* floating controls (theme) */
 .controls { position: fixed; top: 14px; right: 14px; z-index: 50; display: flex; gap: 8px; }
@@ -172,17 +190,36 @@ a { color: inherit; text-decoration: none; }
 }
 .controls button svg, .controls a svg { width: 18px; height: 18px; }
 
-/* generic page header for non-day pages (paper, no red banner) */
-.page-head { padding: clamp(28px, 6vw, 56px) clamp(20px, 5vw, 60px) 0; }
+/* Generic page furniture for non-day pages. Head and body share the same
+   left edge and gutter so titles line up with the content beneath them. */
+.page-head { max-width: 68rem; padding: clamp(28px, 6vw, 56px) clamp(20px, 5vw, 60px) 0; }
 .page-head h1 { font-family: var(--font-display); font-weight: 560; font-size: clamp(1.8rem, 4vw, 2.6rem); letter-spacing: -0.01em; margin: 0 0 6px; }
-.page-body { max-width: var(--measure); margin: 0 auto; padding: 8px clamp(20px, 5vw, 60px) 80px; }
-.page-body.wide { max-width: 60rem; }
+.page-body { max-width: calc(var(--measure) + clamp(40px, 10vw, 120px)); padding: 8px clamp(20px, 5vw, 60px) 80px; }
+.page-body.wide { max-width: 68rem; }
 
 /* reading typography */
 .reading p { margin: 0 0 1.05em; max-width: var(--measure); }
 .reading strong { font-weight: 640; }
 .celebrant { color: var(--brand-red); }
 .rubric { color: color-mix(in srgb, var(--season-ink) 82%, var(--ink)); font-style: italic; }
+
+/* shared page furniture */
+.page-head .eyebrow {
+  font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.18em; font-size: 0.7rem;
+  font-weight: 600; color: var(--season-ink); margin: 0 0 8px;
+}
+.page-head .sub { font-family: var(--font-ui); font-size: 0.82rem; color: var(--muted); margin: 8px 0 0; }
+
+/* static legal / compliance pages */
+.legal { font-family: var(--font-body); }
+.legal .lede { font-size: 1.15rem; color: var(--muted); line-height: 1.65; margin: 6px 0 1.6em; }
+.legal h2 {
+  font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.11em; font-size: 0.72rem;
+  font-weight: 600; color: var(--season-ink); margin: 2.2em 0 0.7em;
+}
+.legal p, .legal li { font-size: calc(1.0625rem * var(--font-scale)); line-height: 1.75; margin: 0 0 1em; }
+.legal ul { padding-left: 1.2em; margin: 0 0 1em; }
+.legal a { color: var(--season-ink); text-decoration: underline; text-underline-offset: 2px; }
 
 /* =====================================================================
    Interim styles for section pages (Order/Hymns/Prayers/About/Calendar/
@@ -235,22 +272,17 @@ a { color: inherit; text-decoration: none; }
 .approw .s { color: var(--muted); font-size: 0.9rem; font-family: var(--font-ui); }
 
 /* =====================================================================
-   Mass Mode — screen-awake, chrome tucked away, larger type for use
-   during the liturgy. Toggled via data-mass on <html>.
+   Mass Mode — a distraction-free surface for use during the liturgy, with
+   the screen kept awake and generous leading. The route (/mass/) owns its
+   own layout; here we just quieten the surrounding chrome. The tab bar
+   stays so the user can always navigate away.
    ===================================================================== */
-:root[data-mass="on"] { --text-reading: clamp(1.3rem, 1.1rem + 0.9vw, 1.6rem); --leading-reading: 1.85; }
-:root[data-mass="on"] .rail,
-:root[data-mass="on"] .tabbar { display: none; }
-:root[data-mass="on"] .missal { display: block; max-width: 46rem; margin: 0 auto; background: none; }
-:root[data-mass="on"] .ordo-rail { display: none; }
-:root[data-mass="on"] .ordo-grid { grid-template-columns: minmax(0, 1fr); }
-:root[data-mass="on"] .content { padding-bottom: 40px; }
-.controls .mass-exit {
-  width: auto; border-radius: 999px; padding: 0 16px; gap: 8px;
-  font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.7rem; font-weight: 600;
-  color: var(--paper); background: var(--season-ink); border-color: var(--season-ink);
-}
-.controls .mass-exit svg { width: 15px; height: 15px; }
+:root[data-mass="on"] { --leading-reading: 1.85; }
+:root[data-mass="on"] .rail { display: none; }
+:root[data-mass="on"] .missal { display: block; background: none; }
+:root[data-mass="on"] .controls { opacity: 0.55; }
+:root[data-mass="on"] .controls:hover,
+:root[data-mass="on"] .controls:focus-within { opacity: 1; }
 
 /* =====================================================================
    Print — a clean worship aid: black on white, chrome removed.

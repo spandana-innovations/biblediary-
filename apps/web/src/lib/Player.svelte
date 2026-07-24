@@ -61,52 +61,116 @@
 ></audio>
 
 {#if player.track}
+  {@const pct = player.duration ? (player.current / player.duration) * 100 : 0}
   <div class="playerbar" role="region" aria-label="Now playing">
+    <!-- hairline progress along the top edge of the bar -->
+    <div class="pb-line" style="transform: scaleX({pct / 100})" aria-hidden="true"></div>
+
     <button class="pb-play" onclick={togglePlay} aria-label={player.playing ? "Pause" : "Play"}>
       {@html player.playing ? icons.pause : icons.play}
     </button>
+
     <div class="pb-meta">
       <div class="pb-title">{player.track.title}</div>
-      <div class="pb-sub">{player.track.subtitle ?? ""}</div>
+      <div class="pb-sub">
+        <span class="pb-note">{@html icons.note}</span>{player.track.subtitle ?? "God’s Word"}
+      </div>
     </div>
+
     <div class="pb-scrub">
       <span class="pb-t">{fmt(player.current)}</span>
       <input
         type="range" min="0" max={player.duration || 0} value={player.current}
+        style="--pct: {pct}%"
         oninput={scrub} aria-label="Seek"
       />
       <span class="pb-t">{fmt(player.duration)}</span>
     </div>
+
     <button class="pb-close" onclick={closePlayer} aria-label="Close player">{@html icons.close}</button>
   </div>
 {/if}
 
 <style>
+  /* Themed to the missal: paper ground, seasonal ink, hairline rules. */
   .playerbar {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
-    display: flex; align-items: center; gap: 14px;
-    padding: 10px clamp(14px, 4vw, 28px);
-    background: color-mix(in srgb, var(--paper) 82%, var(--season-wash));
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px clamp(14px, 4vw, 32px);
+    background: color-mix(in srgb, var(--paper) 88%, var(--season-wash));
     border-top: 1px solid var(--hairline);
-    backdrop-filter: blur(12px);
-    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    backdrop-filter: blur(14px);
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    animation: pb-rise 0.26s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  @media (max-width: 1023px) { .playerbar { bottom: 60px; } }
+  @keyframes pb-rise { from { transform: translateY(100%); } }
+  @media (max-width: 1023px) { .playerbar { bottom: 68px; } }
+
+  .pb-line {
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--season-ink); transform-origin: left; transform: scaleX(0);
+    transition: transform 0.2s linear;
+  }
+
   .pb-play {
-    flex-shrink: 0; width: 46px; height: 46px; border-radius: 50%;
-    border: 0; background: var(--season-ink); color: var(--paper);
+    flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%;
+    border: 1px solid var(--season-ink); background: var(--season-ink); color: var(--paper);
+    display: grid; place-items: center; cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .pb-play:hover { transform: scale(1.05); }
+  .pb-play :global(svg) { width: 19px; height: 19px; }
+
+  .pb-meta { min-width: 0; flex-shrink: 0; width: clamp(130px, 22vw, 240px); display: grid; gap: 2px; }
+  .pb-title {
+    font-family: var(--font-body); font-weight: 620; font-size: 1.05rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .pb-sub {
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--font-ui); font-size: 0.72rem; color: var(--muted);
+    letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .pb-note { display: grid; color: var(--season-gold); flex-shrink: 0; }
+  .pb-note :global(svg) { width: 13px; height: 13px; }
+
+  .pb-scrub { flex: 1; display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .pb-t {
+    font-family: var(--font-ui); font-size: 0.68rem; color: var(--muted);
+    font-variant-numeric: tabular-nums; letter-spacing: 0.03em;
+  }
+
+  /* Slim seasonal track with a gold playhead. */
+  .pb-scrub input {
+    flex: 1; min-width: 40px; height: 20px; cursor: pointer;
+    -webkit-appearance: none; appearance: none; background: transparent;
+  }
+  .pb-scrub input::-webkit-slider-runnable-track {
+    height: 3px; border-radius: 2px;
+    background: linear-gradient(to right, var(--season-ink) var(--pct, 0%), var(--hairline) var(--pct, 0%));
+  }
+  .pb-scrub input::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; margin-top: -5px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: var(--season-gold); border: 2px solid var(--paper);
+  }
+  .pb-scrub input::-moz-range-track { height: 3px; border-radius: 2px; background: var(--hairline); }
+  .pb-scrub input::-moz-range-progress { height: 3px; border-radius: 2px; background: var(--season-ink); }
+  .pb-scrub input::-moz-range-thumb {
+    width: 13px; height: 13px; border-radius: 50%;
+    background: var(--season-gold); border: 2px solid var(--paper);
+  }
+
+  .pb-close {
+    flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid var(--hairline); background: transparent; color: var(--muted);
     display: grid; place-items: center; cursor: pointer;
   }
-  .pb-play :global(svg) { width: 20px; height: 20px; }
-  .pb-meta { min-width: 0; flex-shrink: 0; width: clamp(120px, 22vw, 220px); }
-  .pb-title { font-family: var(--font-body); font-weight: 620; font-size: 1.02rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pb-sub { font-family: var(--font-ui); font-size: 0.74rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pb-scrub { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .pb-t { font-family: var(--font-ui); font-size: 0.68rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .pb-scrub input {
-    flex: 1; min-width: 40px; accent-color: var(--season-ink); height: 3px;
-  }
-  .pb-close { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--hairline); background: transparent; color: var(--muted); display: grid; place-items: center; cursor: pointer; }
+  .pb-close:hover { color: var(--ink); border-color: var(--season-ink); }
   .pb-close :global(svg) { width: 16px; height: 16px; }
-  @media (max-width: 640px) { .pb-scrub .pb-t { display: none; } .pb-meta { width: auto; flex: 1; } .pb-scrub { display: none; } }
+
+  @media (max-width: 700px) {
+    .pb-scrub { display: none; }
+    .pb-meta { width: auto; flex: 1; }
+  }
 </style>

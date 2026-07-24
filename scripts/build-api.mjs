@@ -83,12 +83,16 @@ for (const doc of dayDocs) {
     liturgicalColor: doc.data.liturgicalColor ?? null,
     celebration: doc.data.celebration ?? null,
     psalterWeek: doc.data.psalterWeek ?? null,
-    sections: (doc.data.sections ?? []).map((s) => ({
-      key: s.key,
-      title: s.title,
-      ref: s.ref ?? null,
-      audio: audioUrl(s.audio ?? null),
-      body: (s.body ?? "").trim()
+    // Section extras (saintName, saintImage, saintYears, saintFeast,
+    // saintPatronage, …) are passed straight through so the Saint page can
+    // render a dossier without a second content type.
+    sections: (doc.data.sections ?? []).map(({ key, title, ref, audio, body, ...rest }) => ({
+      ...rest,
+      key,
+      title,
+      ref: ref ?? null,
+      audio: audioUrl(audio ?? null),
+      body: (body ?? "").trim()
     }))
   };
   emitted.push(write(`days/${date}.json`, day));
