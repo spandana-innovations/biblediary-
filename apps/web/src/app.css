@@ -58,16 +58,19 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; }
 body {
-  background: var(--page);
+  background:
+    radial-gradient(120% 80% at 50% -8%, color-mix(in srgb, var(--brand) 12%, transparent), transparent 55%),
+    var(--page);
   color: var(--text);
   font-family: var(--font-body);
   line-height: 1.6;
   -webkit-text-size-adjust: 100%;
 }
 
-/* App column — full width on phones, centered card on desktop */
+/* App column — full width on phones (matches the app design), a framed,
+   elevated surface on wider screens so the web view reads as intentional. */
 .app {
-  max-width: 460px;
+  max-width: 480px;
   margin: 0 auto;
   min-height: 100dvh;
   /* Matches the content sheet so short pages never show a colour gap below it;
@@ -76,7 +79,17 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 60px -20px rgba(0, 0, 0, 0.25);
+}
+@media (min-width: 640px) {
+  .app {
+    margin: 28px auto 40px;
+    min-height: min(880px, calc(100dvh - 68px));
+    border-radius: 30px;
+    overflow: hidden;
+    box-shadow:
+      0 30px 80px -32px rgba(120, 20, 25, 0.5),
+      0 0 0 1px rgba(0, 0, 0, 0.05);
+  }
 }
 
 a { color: inherit; text-decoration: none; }
@@ -105,6 +118,7 @@ a { color: inherit; text-decoration: none; }
   position: relative;
   padding: 46px 20px 20px;
   flex-shrink: 0;
+  overflow: hidden;
 }
 .rhead::after {
   content: "";
@@ -112,6 +126,20 @@ a { color: inherit; text-decoration: none; }
   inset: 0;
   background: radial-gradient(80% 120% at 85% 0%, rgba(255, 255, 255, 0.18), transparent 55%);
   pointer-events: none;
+}
+/* Faint cross watermark, echoing the app's identity in the header band. */
+.rhead::before {
+  content: "";
+  position: absolute;
+  right: -28px;
+  bottom: -46px;
+  width: 210px;
+  height: 210px;
+  opacity: 0.09;
+  pointer-events: none;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='43' y='4' width='14' height='92' rx='3' fill='white'/%3E%3Crect x='18' y='28' width='64' height='14' rx='3' fill='white'/%3E%3C/svg%3E")
+      no-repeat center / contain;
 }
 .rhead .bar { display: flex; align-items: center; gap: 14px; position: relative; z-index: 2; }
 .rhead h1 { font: 600 1.4rem/1.1 var(--font-body); margin: 0; flex: 1; }

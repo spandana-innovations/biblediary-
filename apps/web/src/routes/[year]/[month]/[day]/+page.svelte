@@ -70,6 +70,10 @@
   .lsub { color: rgba(255, 255, 255, 0.86); font-size: 0.95rem; position: relative; z-index: 2; }
   .tabs { display: flex; gap: 10px; margin-top: 18px; overflow-x: auto; position: relative; z-index: 2; padding-bottom: 2px; }
   .tabs::-webkit-scrollbar { height: 0; }
+  /* On wider screens the section chips wrap instead of scrolling horizontally. */
+  @media (min-width: 640px) {
+    .tabs { flex-wrap: wrap; overflow-x: visible; }
+  }
   .tab {
     flex: 0 0 auto; border: 1px solid rgba(255, 255, 255, 0.5); background: transparent; color: #fff;
     border-radius: 999px; padding: 0.6rem 1.15rem; font: 600 0.94rem var(--font-body); cursor: pointer; white-space: nowrap;

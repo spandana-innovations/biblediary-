@@ -66,7 +66,14 @@
 </div>
 
 <style>
-  .home { flex: 1; display: grid; place-items: center; padding: 40px 8px 8px; background: var(--home-bg); }
+  .home {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    padding: 40px 8px 8px;
+    background:
+      radial-gradient(58% 44% at 50% 42%, color-mix(in srgb, var(--brand) 16%, var(--home-bg)), var(--home-bg) 72%);
+  }
   svg { width: 100%; height: auto; max-height: 78vh; }
   .arm-label { fill: #fff; font-family: var(--font-body); font-weight: 700; text-anchor: middle; }
   .arm-label.sub { font-weight: 600; }
