@@ -13,7 +13,7 @@
 
   /** Homily tips are a priest-mode extra; everything else always shows. */
   const sections = $derived(
-    settings.priestMode ? day.sections : day.sections.filter((s: { key: string }) => s.key !== "homily")
+    settings.ministryMode ? day.sections : day.sections.filter((s: { key: string }) => s.key !== "homily")
   );
 
   // Day navigation
@@ -157,7 +157,7 @@
       <p class="meta">
         {#if seasonLabel(season, day.season)}<span class="sea">{seasonLabel(season, day.season)}</span>{/if}
         <span class="dot">·</span><span>≈ {minutes} min</span>
-        {#if settings.priestMode}<span class="dot">·</span><span class="pm">Priest mode</span>{/if}
+        {#if settings.ministryMode}<span class="dot">·</span><span class="pm">Ministry mode</span>{/if}
       </p>
     </div>
   </header>
@@ -313,7 +313,7 @@
     -webkit-initial-letter: 3; initial-letter: 3; float: left; line-height: 0.8;
     padding-right: 0.08em; margin-top: 0.05em;
   }
-  /* homily tips (priest mode) read as a marginal note */
+  /* homily tips (ministry mode) read as a marginal note */
   .body.homily {
     border-left: 2px solid color-mix(in srgb, var(--season-gold) 55%, transparent);
     padding-left: 18px;

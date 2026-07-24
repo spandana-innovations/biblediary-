@@ -6,7 +6,10 @@
    */
   import { onMount } from "svelte";
   import { base } from "$app/paths";
-  import { renderBody, todayISO, nearestDate, getDay, type Day, type Section } from "$lib/api";
+  import {
+    renderBody, todayISO, nearestDate, getDay, getSaints,
+    type Day, type Section, type SaintEntry
+  } from "$lib/api";
   import { seasonToken } from "$lib/liturgical";
   import { icons } from "$lib/icons";
 
@@ -17,6 +20,51 @@
     const want = nearestDate(data.index?.dates ?? [], todayISO());
     if (want && want !== data.day?.date) getDay(fetch, want).then((d) => (day = d)).catch(() => {});
   });
+
+  // ---- find a saint ----
+  let q = $state("");
+  let all: SaintEntry[] = $state([]);
+  let loadedAll = false;
+
+  async function ensureIndex() {
+    if (loadedAll) return;
+    try {
+      all = await getSaints(fetch);
+      loadedAll = true;
+    } catch {
+      /* index not built yet */
+    }
+  }
+  function onSearchInput() {
+    ensureIndex();
+  }
+
+  const hits = $derived.by(() => {
+    const term = q.trim().toLowerCase();
+    if (term.length < 2) return [] as SaintEntry[];
+    const seen = new Set<string>();
+    return all
+      .filter((s) => {
+        if (!s.name.toLowerCase().includes(term)) return false;
+        const k = s.name.toLowerCase();
+        if (seen.has(k)) return false;   // the same saint recurs across years
+        seen.add(k);
+        return true;
+      })
+      .slice(0, 24);
+  });
+
+  async function openSaint(entry: SaintEntry) {
+    q = "";
+    try {
+      day = await getDay(fetch, entry.date);
+      imgFailed = false;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      /* keep current */
+    }
+  }
+
 
   const season = $derived(day ? seasonToken(day.season, day.liturgicalColor, day.celebration) : "neutral");
   const saint = $derived(((day?.sections ?? []) as Section[]).find((s) => s.key === "saint") ?? null);
@@ -38,6 +86,10 @@
 
   const WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const MON = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const shortDate = (d: string) => {
+    const [y, m, dd] = d.split("-").map(Number);
+    return `${dd} ${MON[m - 1].slice(0, 3)} ${y}`;
+  };
   function dateLine(d?: string) {
     if (!d) return "";
     const [y, m, dd] = d.split("-").map(Number);
@@ -55,6 +107,33 @@
     <p class="eyebrow">Saint of the Day</p>
     <h1>{name}</h1>
     <p class="sub">{dateLine(day?.date)}</p>
+
+    <div class="finder">
+      <span class="f-ic">{@html icons.search}</span>
+      <input
+        type="search" bind:value={q} oninput={onSearchInput}
+        onfocus={ensureIndex}
+        placeholder="Find a saint…" aria-label="Find a saint"
+      />
+      {#if q}<button class="f-x" onclick={() => (q = "")} aria-label="Clear">{@html icons.close}</button>{/if}
+    </div>
+
+    {#if q.trim().length >= 2}
+      {#if hits.length}
+        <ul class="hits">
+          {#each hits as h (h.name + h.date)}
+            <li>
+              <button onclick={() => openSaint(h)}>
+                <span class="h-name">{h.name}</span>
+                <span class="h-date">{shortDate(h.date)}</span>
+              </button>
+            </li>
+          {/each}
+        </ul>
+      {:else}
+        <p class="no-hits">{loadedAll ? `No saint matching “${q}”.` : "Loading…"}</p>
+      {/if}
+    {/if}
   </div>
 
   <div class="page-body">
@@ -99,6 +178,35 @@
 <style>
   .eyebrow { font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.18em; font-size: 0.7rem; font-weight: 600; color: var(--season-ink); margin: 0 0 8px; }
   .sub { font-family: var(--font-ui); font-size: 0.82rem; color: var(--muted); margin: 8px 0 0; }
+
+  .finder {
+    display: flex; align-items: center; gap: 10px; margin: 20px 0 0; max-width: 26rem;
+    border: 1px solid var(--hairline); border-radius: 999px; padding: 9px 16px;
+    background: color-mix(in srgb, var(--paper) 70%, var(--season-wash));
+  }
+  .f-ic { display: grid; color: var(--muted); flex-shrink: 0; }
+  .f-ic :global(svg) { width: 17px; height: 17px; }
+  .finder input {
+    flex: 1; min-width: 0; border: 0; background: transparent; outline: none;
+    color: var(--ink); font-family: var(--font-body); font-size: 0.98rem;
+  }
+  .finder input::placeholder { color: var(--muted); }
+  .f-x { border: 0; background: none; color: var(--muted); cursor: pointer; display: grid; padding: 0; }
+  .f-x :global(svg) { width: 15px; height: 15px; }
+
+  .hits { list-style: none; margin: 10px 0 0; padding: 0; max-width: 30rem; max-height: 46vh; overflow-y: auto; }
+  .hits button {
+    width: 100%; display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
+    background: none; border: 0; border-bottom: 1px solid var(--hairline);
+    padding: 11px 2px; cursor: pointer; text-align: left; color: inherit;
+  }
+  .h-name { font-family: var(--font-body); font-size: 1.02rem; min-width: 0; }
+  .h-date {
+    font-family: var(--font-ui); font-size: 0.68rem; color: var(--muted);
+    white-space: nowrap; letter-spacing: 0.04em;
+  }
+  .hits button:hover .h-name { color: var(--season-ink); }
+  .no-hits { margin: 12px 0 0; color: var(--muted); font-family: var(--font-ui); font-size: 0.82rem; }
 
   .portrait { margin: 26px 0 30px; display: grid; justify-items: center; gap: 12px; }
   .portrait img {

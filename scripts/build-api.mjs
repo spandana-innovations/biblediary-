@@ -159,6 +159,24 @@ for (const h of hymns) searchItems.push({ type: "Hymn", title: h.title, sub: h.c
 for (const o of orderOfMass) searchItems.push({ type: "Order of Mass", title: o.title, sub: "", text: strip(o.body), url: "order-of-mass/" });
 emitted.push(write("search.json", { items: searchItems }));
 
+// ---- Saints index ---------------------------------------------------------
+// Drives the "find a saint" search, so the Saint page can look one up without
+// pulling every day's JSON.
+const saints = [];
+for (const doc of dayDocs) {
+  const s = (doc.data.sections ?? []).find((x) => x.key === "saint");
+  const name = (s?.saintName ?? "").toString().trim();
+  if (!name) continue;
+  const art = saintImages[name];
+  saints.push({
+    date: String(doc.data.date),
+    name,
+    image: art?.image ?? null,
+    blurb: strip(s.body ?? "").slice(0, 160)
+  });
+}
+emitted.push(write("saints.json", { items: saints }));
+
 // ---- Index + manifest -----------------------------------------------------
 emitted.push(
   write("index.json", {

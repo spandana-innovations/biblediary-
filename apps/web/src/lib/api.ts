@@ -113,6 +113,15 @@ export function groupByCategory(items: CollectionItem[]): { category: string; it
   return order.map((category) => ({ category, items: map.get(category)! }));
 }
 
+export interface SaintEntry {
+  date: string;
+  name: string;
+  image: string | null;
+  blurb: string;
+}
+export const getSaints = (f: typeof fetch) =>
+  getJson<{ items: SaintEntry[] }>(f, "saints.json").then((r) => r.items);
+
 export const getIndex = (f: typeof fetch) => getJson<ApiIndex>(f, "index.json");
 export const getSearch = (f: typeof fetch) => getJson<{ items: SearchItem[] }>(f, "search.json").then((r) => r.items);
 export const getDay = (f: typeof fetch, date: string) => getJson<Day>(f, `days/${date}.json`);

@@ -105,11 +105,14 @@ if (!records.length) { console.error("[import] no rows — nothing written"); pr
  * for the same handful of labels. Meaning lives in the LABEL TEXT, so that is
  * what we key on — colour is discarded as editorial noise.
  */
+// The trailing colon is required. Liturgical labels are always written
+// "Celebrant:", "Response:", "All:" — matching the bare word turned ordinary
+// prose into dialogue ("...and ALL the nations will gather there").
 const LABELS = [
-  { re: /^celebrant\s*:?$/i, cls: "celebrant" },
-  { re: /^(response|reponse|resopnse|resonse|esponse|respose)\s*:?$/i, cls: "resp-label" },
-  { re: /^(narrator|jesus|crowd|pilate|peter|disciples|voice|reader|all)\s*:?$/i, cls: "speaker" },
-  { re: /^(reflection|life\s+messages?|the\s+context|the\s+parable|context|application)\s*:?$/i, cls: "subhead" }
+  { re: /^celebrant\s*:$/i, cls: "celebrant" },
+  { re: /^(response|reponse|resopnse|resonse|esponse|respose)\s*:$/i, cls: "resp-label" },
+  { re: /^(narrator|jesus|crowd|pilate|peter|disciples|voice|reader|all)\s*:$/i, cls: "speaker" },
+  { re: /^(reflection|life\s+messages?|the\s+context|the\s+parable|context|application)\s*:$/i, cls: "subhead" }
 ];
 
 // HTML4 named entities, latin-1 range plus the punctuation the editors used.
@@ -199,7 +202,7 @@ function clean(html) {
   const keep = [];
   s = s.replace(/<span[^>]*color\s*:[^>]*>([\s\S]*?)<\/span>/gi, (_m, inner) => {
     const text = decode(inner.replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim();
-    const hit = LABELS.find((l) => l.re.test(text.replace(/[:\s]+$/, "")));
+    const hit = LABELS.find((l) => l.re.test(text));
     if (!hit) return inner;
     const plain = inner.replace(/<[^>]+>/g, "");
     keep.push(`<span class="${hit.cls}">${plain}</span>`);

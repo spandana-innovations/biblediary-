@@ -4,7 +4,7 @@
   import { icons } from "$lib/icons";
   import {
     settings, ui, closeSettings, FONT_STEPS,
-    setFontScale, setPriestMode, setTheme, set
+    setFontScale, setMinistryMode, setTheme, set
   } from "$lib/settings.svelte";
 
   let voices: SpeechSynthesisVoice[] = $state([]);
@@ -81,14 +81,14 @@
           <h3>Ministry</h3>
           <div class="row">
             <div class="lbl">
-              <span>Priest mode</span>
+              <span>Ministry mode</span>
               <span class="hint">Adds homily tips to the readings and to Mass Mode</span>
             </div>
             <button
-              class="switch" class:on={settings.priestMode}
-              role="switch" aria-checked={settings.priestMode}
-              aria-label="Priest mode"
-              onclick={() => setPriestMode(!settings.priestMode)}
+              class="switch" class:on={settings.ministryMode}
+              role="switch" aria-checked={settings.ministryMode}
+              aria-label="Ministry mode"
+              onclick={() => setMinistryMode(!settings.ministryMode)}
             ><span class="knob"></span></button>
           </div>
         </section>

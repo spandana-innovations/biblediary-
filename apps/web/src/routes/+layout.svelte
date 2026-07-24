@@ -12,21 +12,13 @@
   import SettingsPanel from "$lib/SettingsPanel.svelte";
   import Splash from "$lib/Splash.svelte";
   import MassTransition from "$lib/MassTransition.svelte";
-  import { openPalette } from "$lib/palette.svelte";
+  import Controls from "$lib/Controls.svelte";
   import { mass, showMassCurtain } from "$lib/massMode.svelte";
-  import { loadSettings, openSettings, settings, cycleTheme, isDark } from "$lib/settings.svelte";
+  import { loadSettings, settings } from "$lib/settings.svelte";
 
   let { data, children } = $props();
-  let dark = $state(false);
 
-  onMount(() => {
-    loadSettings();
-    dark = isDark();
-  });
-  function toggleTheme() {
-    cycleTheme();
-    dark = isDark();
-  }
+  onMount(loadSettings);
 
   // Cross-fade between pages via the View Transitions API (progressive; a no-op
   // where unsupported or when the user prefers reduced motion).
@@ -53,21 +45,41 @@
     return `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}`;
   }
 
-  // In priest mode, Prayers becomes Ministry — homily tips and reflections
-  // sit above the same prayer collection.
-  const prayerTab = $derived(
-    settings.priestMode
-      ? { href: `${base}/ministry/`, label: "Ministry", icon: icons.quote, key: "ministry" }
-      : { href: `${base}/prayers/`, label: "Prayers", icon: icons.beads, key: "prayers" }
+  /**
+   * Two navigation sets. Ministry mode puts the celebrant's own material in
+   * reach — homily tips, reflections and his notes for the day; otherwise the
+   * app leads with what a congregation wants.
+   */
+  const tabs = $derived(
+    settings.ministryMode
+      ? [
+          { href: todayHref, label: "Readings", icon: icons.book, key: "readings" },
+          { href: `${base}/homily/`, label: "Homily", icon: icons.quote, key: "homily" },
+          { href: `${base}/mass/`, label: "Mass", icon: icons.cross, key: "mass" },
+          { href: `${base}/reflections/`, label: "Reflect", icon: icons.candle, key: "reflections" },
+          { href: `${base}/notes/`, label: "Notes", icon: icons.note_pen, key: "notes" }
+        ]
+      : [
+          { href: todayHref, label: "Readings", icon: icons.book, key: "readings" },
+          { href: `${base}/saint/`, label: "Saint", icon: icons.saint, key: "saint" },
+          { href: `${base}/mass/`, label: "Mass", icon: icons.cross, key: "mass" },
+          { href: `${base}/hymns/`, label: "Hymns", icon: icons.note, key: "hymns" },
+          { href: `${base}/prayers/`, label: "Prayers", icon: icons.beads, key: "prayers" }
+        ]
   );
 
+  /** The rail carries the tab set plus everything else. */
   const nav = $derived([
-    { href: todayHref, label: "Readings", icon: icons.book, key: "readings" },
-    { href: `${base}/mass/`, label: "Mass", icon: icons.cross, key: "mass" },
-    { href: `${base}/saint/`, label: "Saint", icon: icons.saint, key: "saint" },
+    ...tabs.filter((t) => t.key !== "mass"),
+    { href: `${base}/mass/`, label: "Mass Mode", icon: icons.cross, key: "mass" },
     { href: `${base}/order-of-mass/`, label: "Order of Mass", icon: icons.church, key: "order-of-mass" },
-    { href: `${base}/hymns/`, label: "Hymns", icon: icons.note, key: "hymns" },
-    prayerTab,
+    ...(settings.ministryMode
+      ? [
+          { href: `${base}/saint/`, label: "Saint", icon: icons.saint, key: "saint" },
+          { href: `${base}/hymns/`, label: "Hymns", icon: icons.note, key: "hymns" },
+          { href: `${base}/prayers/`, label: "Prayers", icon: icons.beads, key: "prayers" }
+        ]
+      : []),
     { href: `${base}/calendar/`, label: "Calendar", icon: icons.calendar, key: "calendar" },
     { href: `${base}/search/`, label: "Search", icon: icons.search, key: "search" }
   ]);
@@ -75,7 +87,7 @@
   const path = $derived($page.url.pathname);
   const activeKey = $derived.by(() => {
     if (/\/\d{4}\/\d{2}\/\d{2}\//.test(path)) return "readings";
-    for (const k of ["mass", "saint", "order-of-mass", "ministry", "homily", "hymns", "prayers", "calendar", "search", "about"]) {
+    for (const k of ["mass", "saint", "order-of-mass", "ministry", "homily", "reflections", "notes", "hymns", "prayers", "calendar", "search", "about"]) {
       if (path.includes(`/${k}/`)) return k;
     }
     return "";
@@ -96,7 +108,7 @@
     {/each}
     <div class="rail-foot">
       <span class="fdate">{fdate()}{seasonLabel(season, dayData?.season) ? ` · ${seasonLabel(season, dayData?.season)}` : ""}</span>
-      <span class="fed">{data.index?.edition?.country}{settings.priestMode ? " · Priest mode" : ""}</span>
+      <span class="fed">{data.index?.edition?.country}{settings.ministryMode ? " · Ministry mode" : ""}</span>
     </div>
   </nav>
 
@@ -104,27 +116,23 @@
     {@render children()}
   </main>
 
-  <!-- Mobile tab bar: Mass sits in the centre as a wide cross button. -->
+  <!-- Mobile tab bar: Mass sits in the centre as a raised cross. -->
   <nav class="tabbar" aria-label="Sections">
-    <a class:active={activeKey === "readings"} href={todayHref}>
-      <span class="ic">{@html icons.book}</span>Readings
-    </a>
-    <a class:active={activeKey === "saint"} href="{base}/saint/">
-      <span class="ic">{@html icons.saint}</span>Saint
-    </a>
-    <a
-      class="tab-mass" class:active={activeKey === "mass"} href="{base}/mass/" aria-label="Mass Mode"
-      onclick={() => activeKey !== "mass" && showMassCurtain()}
-    >
-      <span class="mass-orb"><span class="ic">{@html icons.crossSolid}</span></span>
-      <span class="ml">Mass</span>
-    </a>
-    <a class:active={activeKey === "hymns"} href="{base}/hymns/">
-      <span class="ic">{@html icons.note}</span>Hymns
-    </a>
-    <a class:active={activeKey === prayerTab.key} href={prayerTab.href}>
-      <span class="ic">{@html prayerTab.icon}</span>{prayerTab.label}
-    </a>
+    {#each tabs as t (t.key)}
+      {#if t.key === "mass"}
+        <a
+          class="tab-mass" class:active={activeKey === "mass"} href={t.href} aria-label="Mass Mode"
+          onclick={() => activeKey !== "mass" && showMassCurtain()}
+        >
+          <span class="mass-orb"><span class="ic">{@html icons.crossSolid}</span></span>
+          <span class="ml">Mass</span>
+        </a>
+      {:else}
+        <a class:active={activeKey === t.key} href={t.href}>
+          <span class="ic">{@html t.icon}</span>{t.label}
+        </a>
+      {/if}
+    {/each}
   </nav>
 
   <Player />
@@ -134,8 +142,4 @@
 <SettingsPanel />
 <MassTransition />
 
-<div class="controls">
-  <button onclick={openPalette} aria-label="Search (⌘K)">{@html icons.search}</button>
-  <button onclick={toggleTheme} aria-label="Toggle Compline (night) mode">{@html dark ? icons.sun : icons.moon}</button>
-  <button onclick={openSettings} aria-label="Settings">{@html icons.cog}</button>
-</div>
+<Controls />

@@ -8,8 +8,9 @@ export type ThemeMode = "auto" | "light" | "dark";
 export interface Settings {
   /** Reading text scale multiplier. */
   fontScale: number;
-  /** Priest mode surfaces homily tips in the readings and in Mass Mode. */
-  priestMode: boolean;
+  /** Ministry mode surfaces homily tips, reflections and notes, and
+   *  re-optimises Mass Mode for the celebrant. */
+  ministryMode: boolean;
   theme: ThemeMode;
   /** Speech synthesis rate for Listen. */
   voiceRate: number;
@@ -26,7 +27,7 @@ export const FONT_STEPS = [
 
 const DEFAULTS: Settings = {
   fontScale: 1,
-  priestMode: false,
+  ministryMode: false,
   theme: "auto",
   voiceRate: 1,
   voiceURI: ""
@@ -45,7 +46,15 @@ const KEY = "godsword:settings";
 export function loadSettings() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) Object.assign(settings, { ...DEFAULTS, ...JSON.parse(raw) });
+    if (raw) {
+      const saved = JSON.parse(raw) as Partial<Settings> & { priestMode?: boolean };
+      // "Priest mode" was renamed to "Ministry mode"; carry the old value over.
+      if (saved.ministryMode === undefined && saved.priestMode !== undefined) {
+        saved.ministryMode = saved.priestMode;
+      }
+      delete saved.priestMode;
+      Object.assign(settings, { ...DEFAULTS, ...saved });
+    }
     else {
       // Migrate the older standalone theme key.
       const legacy = localStorage.getItem("theme");
@@ -62,7 +71,7 @@ function apply() {
   root.style.setProperty("--font-scale", String(settings.fontScale));
   root.setAttribute("data-theme", settings.theme === "auto" ? "" : settings.theme);
   if (settings.theme === "auto") root.removeAttribute("data-theme");
-  root.toggleAttribute("data-priest", settings.priestMode);
+  root.toggleAttribute("data-ministry", settings.ministryMode);
 }
 
 function persist() {
@@ -81,7 +90,7 @@ export function set<K extends keyof Settings>(key: K, value: Settings[K]) {
 }
 
 export const setFontScale = (s: number) => set("fontScale", s);
-export const setPriestMode = (v: boolean) => set("priestMode", v);
+export const setMinistryMode = (v: boolean) => set("ministryMode", v);
 export const setTheme = (t: ThemeMode) => set("theme", t);
 export function cycleTheme() {
   setTheme(settings.theme === "dark" ? "light" : "dark");

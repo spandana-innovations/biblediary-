@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * Ministry — what "Prayers" becomes in priest mode. Three blocks in order:
+   * Ministry — what "Prayers" becomes in ministry mode. Three blocks in order:
    * Homily Tips (with its own date selector), Reflections, then the prayer
    * collection exactly as before.
    */
@@ -96,8 +96,8 @@
 <div class="page-head">
   <p class="eyebrow">For Those Who Preach &amp; Lead</p>
   <h1>Ministry</h1>
-  {#if !settings.priestMode}
-    <p class="note">Priest mode is off — turn it on in Settings to keep this section.</p>
+  {#if !settings.ministryMode}
+    <p class="note">Ministry mode is off — turn it on in Settings to keep this section.</p>
   {/if}
   {#if view !== "home"}
     <button class="crumb" onclick={back}>{@html icons.prev}<span>{view === "prayers" && cat ? "All categories" : "Ministry"}</span></button>

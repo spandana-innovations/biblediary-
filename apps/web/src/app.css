@@ -268,9 +268,9 @@ a { color: inherit; text-decoration: none; }
    gets its own quiet ground. The paragraph is tinted by whichever label it
    opens with, giving the eye something to track without shouting.
    ===================================================================== */
-.reading p:has(> .resp-label),
-.reading p:has(> .celebrant),
-.reading p:has(> .speaker) {
+.reading p:has(> .resp-label:first-child),
+.reading p:has(> .celebrant:first-child),
+.reading p:has(> .speaker:first-child) {
   padding: 0.7em 0.95em;
   border-radius: 8px;
   margin-bottom: 0.75em;
@@ -278,19 +278,19 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* the people's response — seasonal ground */
-.reading p:has(> .resp-label) {
+.reading p:has(> .resp-label:first-child) {
   background: color-mix(in srgb, var(--season-ink) 8%, transparent);
   border-left-color: color-mix(in srgb, var(--season-ink) 55%, transparent);
   color: color-mix(in srgb, var(--season-deep) 78%, var(--ink));
   font-weight: 560;
 }
 /* the celebrant — the red of the rubrics, kept faint as a ground */
-.reading p:has(> .celebrant) {
+.reading p:has(> .celebrant:first-child) {
   background: color-mix(in srgb, var(--brand-red) 6%, transparent);
   border-left-color: color-mix(in srgb, var(--brand-red) 45%, transparent);
 }
 /* Passion speakers — neutral ground so the red stays with the celebrant */
-.reading p:has(> .speaker) {
+.reading p:has(> .speaker:first-child) {
   background: color-mix(in srgb, var(--ink) 5%, transparent);
   border-left-color: color-mix(in srgb, var(--season-gold) 55%, transparent);
 }
@@ -300,9 +300,9 @@ a { color: inherit; text-decoration: none; }
 }
 
 @media print {
-  .reading p:has(> .resp-label),
-  .reading p:has(> .celebrant),
-  .reading p:has(> .speaker) { background: none; border-left-color: #999; }
+  .reading p:has(> .resp-label:first-child),
+  .reading p:has(> .celebrant:first-child),
+  .reading p:has(> .speaker:first-child) { background: none; border-left-color: #999; }
 }
 
 /* shared page furniture */

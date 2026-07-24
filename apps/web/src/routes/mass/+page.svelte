@@ -3,7 +3,7 @@
    * Mass Mode — the liturgy of the day, in order, for use during Mass.
    * Only the readings appear (no reflection/intercessions chrome), everything
    * is expanded by default, the screen is kept awake, and the whole surface is
-   * tinted by the liturgical season. Priest mode adds the homily tip.
+   * tinted by the liturgical season. Ministry mode adds the homily tip.
    */
   import { onMount } from "svelte";
   import { base } from "$app/paths";
@@ -12,6 +12,7 @@
   import { icons } from "$lib/icons";
   import { settings } from "$lib/settings.svelte";
   import { enterMass, exitMass } from "$lib/massMode.svelte";
+  import { getNote } from "$lib/notes.svelte";
 
   let { data } = $props();
 
@@ -48,11 +49,13 @@
 
   /** Mass Mode shows the liturgy proper, in celebration order. */
   const ORDER = ["first_reading", "responsorial_psalm", "second_reading", "acclamation", "gospel", "homily"];
+  /** Whose Mass this is laid out for — it changes what gets emphasis. */
+  const role = $derived(settings.ministryMode ? "celebrant" : "congregation");
   const sections = $derived.by(() => {
     const all = (day?.sections ?? []) as Section[];
     const wanted = all.filter((s) => ORDER.includes(s.key));
-    // Homily tips are a priest-mode extra.
-    const visible = settings.priestMode ? wanted : wanted.filter((s) => s.key !== "homily");
+    // Homily tips are a ministry-mode extra.
+    const visible = settings.ministryMode ? wanted : wanted.filter((s) => s.key !== "homily");
     return visible.sort((a, b) => ORDER.indexOf(a.key) - ORDER.indexOf(b.key));
   });
 
@@ -65,6 +68,12 @@
   onMount(() => {
     enterMass();
     return () => exitMass();
+  });
+
+  // The celebrant's own note for this day, if he wrote one.
+  let note = $state("");
+  $effect(() => {
+    note = day && settings.ministryMode ? getNote(day.date) : "";
   });
 
   const WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -81,7 +90,7 @@
   <meta name="description" content="The readings of today's Mass, in order, for use during the liturgy." />
 </svelte:head>
 
-<div class="massmode" data-season={season}>
+<div class="massmode" data-season={season} data-role={role}>
   {#if !day}
     <p class="mm-empty">No readings are loaded for today yet.</p>
   {:else}
@@ -102,7 +111,7 @@
           aria-label="Next day">{@html icons.plus}</button>
       </div>
 
-      {#if settings.priestMode}<p class="mm-priest">Priest mode</p>{/if}
+      {#if settings.ministryMode}<p class="mm-priest">Ministry mode</p>{/if}
       {#if day && !isToday}
         <p class="mm-notday">
           Not today’s liturgy
@@ -110,6 +119,13 @@
         </p>
       {/if}
     </header>
+
+    {#if note}
+      <aside class="mm-note">
+        <p class="mm-note-h">Your notes</p>
+        <p class="mm-note-b">{note}</p>
+      </aside>
+    {/if}
 
     <div class="mm-flow">
       {#each sections as s (s.key)}
@@ -236,4 +252,64 @@
 
   /* Mass Mode reads large by default, on top of the user's size preference. */
   .massmode { --text-reading: calc(clamp(1.25rem, 1.05rem + 0.8vw, 1.5rem) * var(--font-scale)); }
+
+  /* =====================================================================
+     Role emphasis. The same text serves two people at Mass: the celebrant
+     needs his own parts and cues to jump out, the congregation needs to know
+     when to answer. Rather than two layouts, the surface is tagged with whose
+     Mass it is and the weight moves accordingly.
+     ===================================================================== */
+
+  /* --- laid out for the congregation: the responses lead --- */
+  [data-role="congregation"] .mv-body :global(p:has(> .resp-label:first-child)) {
+    font-size: 1.08em; font-weight: 620;
+    padding: 0.85em 1em; border-radius: 10px;
+    background: color-mix(in srgb, var(--season-ink) 12%, transparent);
+    border-left: 4px solid var(--season-ink);
+    color: color-mix(in srgb, var(--season-deep) 85%, var(--ink));
+  }
+  [data-role="congregation"] .mv-body :global(.resp-label) {
+    display: block; margin-bottom: 0.25em; font-size: 0.6em; opacity: 0.8;
+  }
+  /* the celebrant's lines are context here, so they recede */
+  [data-role="congregation"] .mv-body :global(p:has(> .celebrant:first-child)) {
+    opacity: 0.72; font-size: 0.94em;
+  }
+
+  /* --- laid out for the celebrant: his words and cues lead --- */
+  [data-role="celebrant"] .mv-body :global(p:has(> .celebrant:first-child)) {
+    font-size: 1.1em; font-weight: 560;
+    padding: 0.85em 1em; border-radius: 10px;
+    background: color-mix(in srgb, var(--brand-red) 9%, transparent);
+    border-left: 4px solid var(--brand-red);
+    color: color-mix(in srgb, var(--brand-red) 88%, var(--ink));
+  }
+  [data-role="celebrant"] .mv-body :global(.celebrant) {
+    display: block; font-weight: 700;
+  }
+  /* the people's answer becomes the cue that he has finished */
+  [data-role="celebrant"] .mv-body :global(p:has(> .resp-label:first-child)) {
+    font-size: 0.92em; opacity: 0.8; font-style: italic;
+    padding-left: 1em; border-left: 2px solid color-mix(in srgb, var(--season-ink) 40%, transparent);
+  }
+  /* rubrics are stage directions — for him they are instructions, not asides */
+  [data-role="celebrant"] .mv-body :global(.rubric) {
+    display: block; font-style: normal; font-family: var(--font-ui);
+    font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--season-gold); margin: 1em 0 0.4em;
+  }
+
+  /* the celebrant's own notes for the day */
+  .mm-note {
+    max-width: 44rem; margin: 0 auto 8px; padding: 16px 20px;
+    border: 1px dashed color-mix(in srgb, var(--season-gold) 55%, transparent);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--season-gold) 7%, transparent);
+  }
+  .mm-note-h {
+    margin: 0 0 6px; font-family: var(--font-ui); text-transform: uppercase;
+    letter-spacing: 0.12em; font-size: 0.62rem; font-weight: 700; color: var(--season-gold);
+  }
+  .mm-note-b { margin: 0; white-space: pre-wrap; font-size: 0.96rem; line-height: 1.6; color: var(--ink); }
+  @media (min-width: 1024px) { .mm-note { margin-bottom: 18px; } }
 </style>

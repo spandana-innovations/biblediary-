@@ -17,7 +17,7 @@
 
   <h2>What we store</h2>
   <p>
-    Your preferences &mdash; text size, appearance, priest mode, and voice settings &mdash; are saved
+    Your preferences &mdash; text size, appearance, ministry mode, and voice settings &mdash; are saved
     in your browser&rsquo;s local storage on your own device. They never leave it, and clearing your
     browser data removes them.
   </p>
