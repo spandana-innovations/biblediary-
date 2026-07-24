@@ -105,7 +105,8 @@
       <span class="ic">{@html icons.saint}</span>Saint
     </a>
     <a class="tab-mass" class:active={activeKey === "mass"} href="{base}/mass/" aria-label="Mass Mode">
-      <span class="mass-pill"><span class="ic">{@html icons.cross}</span><span class="ml">Mass</span></span>
+      <span class="mass-orb"><span class="ic">{@html icons.crossSolid}</span></span>
+      <span class="ml">Mass</span>
     </a>
     <a class:active={activeKey === "hymns"} href="{base}/hymns/">
       <span class="ic">{@html icons.note}</span>Hymns

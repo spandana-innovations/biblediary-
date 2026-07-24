@@ -163,20 +163,46 @@ a { color: inherit; text-decoration: none; }
 .tabbar a .ic svg { width: 21px; height: 21px; }
 .tabbar a.active { color: var(--season-ink); }
 
-.tabbar .tab-mass { padding: 0 8px 8px; }
-.mass-pill {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  width: 100%; margin-top: -16px; padding: 12px 10px; border-radius: 999px;
-  background: var(--season-ink); color: var(--paper);
-  box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--season-deep) 70%, transparent);
+/* The Mass mark sits proud of the bar: a raised orb that breaks the top edge,
+   ringed in paper so it reads as punched through rather than stuck on. */
+.tabbar { overflow: visible; }
+.tabbar .tab-mass { position: relative; gap: 0; padding-bottom: 8px; }
+.mass-orb {
+  display: grid; place-items: center;
+  width: 62px; height: 62px; border-radius: 50%;
+  margin-top: -30px; margin-bottom: 4px;          /* spill over the bar edge */
+  background:
+    radial-gradient(120% 120% at 50% 12%,
+      color-mix(in srgb, var(--season-ink) 82%, var(--paper)) 0%,
+      var(--season-ink) 45%,
+      var(--season-deep) 100%);
+  /* Ivory, not gold: Easter and Christmas tint the orb itself gold, so a gold
+     mark would vanish. Warm white holds against every season. */
+  color: color-mix(in srgb, var(--paper) 88%, #fff);
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--paper) 92%, var(--season-wash)),   /* the punch-through ring */
+    0 10px 22px -8px color-mix(in srgb, var(--season-deep) 78%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease;
 }
-.mass-pill .ic { display: grid; }
-.mass-pill .ic svg { width: 22px; height: 22px; stroke-width: 2; }
-.mass-pill .ml {
-  font-family: var(--font-ui); font-size: 0.68rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.1em;
+.mass-orb .ic { display: grid; }
+.mass-orb .ic svg {
+  width: 30px; height: 30px;
+  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--season-deep) 55%, transparent));
 }
-.tabbar .tab-mass.active .mass-pill { background: var(--season-deep); }
+.tabbar .tab-mass .ml {
+  font-family: var(--font-ui); font-size: 0.6rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--season-ink);
+}
+.tabbar .tab-mass:active .mass-orb { transform: scale(0.94); }
+/* A faint gold halo marks the active state without changing the silhouette. */
+.tabbar .tab-mass.active .mass-orb {
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--paper) 92%, var(--season-wash)),
+    0 0 0 6.5px color-mix(in srgb, var(--season-gold) 60%, transparent),
+    0 10px 22px -8px color-mix(in srgb, var(--season-deep) 78%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent);
+}
 
 @media (min-width: 1024px) { .tabbar { display: none; } }
 @media (max-width: 1023px) { .content { padding-bottom: 76px; } .rail { display: none; } }

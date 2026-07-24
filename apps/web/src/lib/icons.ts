@@ -5,6 +5,9 @@
 const s = (body: string) =>
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
 
+/** Solid counterpart, for marks that need weight at small sizes. */
+const f = (body: string) => `<svg viewBox="0 0 24 24" fill="currentColor">${body}</svg>`;
+
 export const icons = {
   book: s(`<path d="M12 6.5C10.5 5.3 8 4.7 5.5 4.7c-.6 0-1 .4-1 1v12c0 .6.4 1 1 1 2.5 0 5 .6 6.5 1.8"/><path d="M12 6.5C13.5 5.3 16 4.7 18.5 4.7c.6 0 1 .4 1 1v12c0 .6-.4 1-1 1-2.5 0-5 .6-6.5 1.8"/><path d="M12 6.5v14"/>`),
   angel: s(`<circle cx="12" cy="5.5" r="1.8"/><path d="M12 8c-2 0-3.2 1.6-3.2 3.7V16h6.4v-4.3C15.2 9.6 14 8 12 8z"/><path d="M8.8 11.5C6 11.5 4 13.4 3 15.5c3 .2 5-.8 5.8-2M15.2 11.5c2.8 0 4.8 1.9 5.8 4-3 .2-5-.8-5.8-2"/>`),
@@ -34,8 +37,17 @@ export const icons = {
   candle: s(`<path d="M12 3c1.2 1 1.2 2.4 0 3.4C10.8 5.4 10.8 4 12 3z"/><rect x="9.5" y="8" width="5" height="12" rx="1"/><path d="M8 20h8"/>`),
   chevronRight: s(`<path d="M9 6l6 6-6 6"/>`),
   command: s(`<path d="M9 9V7.5A2.5 2.5 0 1 0 6.5 10H9zm0 0v6m0-6h6M9 15v1.5A2.5 2.5 0 1 1 6.5 14H9zm6 0v1.5a2.5 2.5 0 1 0 2.5-2.5H15zm0 0V9m0 0h1.5A2.5 2.5 0 1 0 14 6.5V9z"/>`),
-  /** Latin cross — the Mass Mode mark. */
+  /** Latin cross, outline — used in the rail and inline. */
   cross: s(`<path d="M12 3v18M6.5 8.5h11"/>`),
+  /**
+   * Latin cross, solid with rounded terminals — the Mass mark. Filled so it
+   * holds its weight inside the raised tab-bar orb at 24px.
+   */
+  crossSolid: f(
+    // Latin proportions: crossbar raised to ~1/3, upper arm 5 units to a
+    // 12-unit stem, so it reads as a cross and never as a plus sign.
+    `<path d="M10.5 3.5A1.5 1.5 0 0 1 13.5 3.5L13.5 7L16.5 7A1.5 1.5 0 0 1 16.5 10L13.5 10L13.5 20.5A1.5 1.5 0 0 1 10.5 20.5L10.5 10L7.5 10A1.5 1.5 0 0 1 7.5 7L10.5 7Z"/>`
+  ),
   /** Haloed figure — Saint of the Day. */
   saint: s(`<circle cx="12" cy="9.5" r="3"/><path d="M7.5 5.2a6 6 0 0 1 9 0"/><path d="M5.5 20.5c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5"/>`),
   cog: s(`<circle cx="12" cy="12" r="3.2"/><path d="M19.4 14a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V20a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.9 18.3a1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.53 14a1.7 1.7 0 0 0-1.56-1.03H2.9a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.55 7.9a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 8.92 3.6 1.7 1.7 0 0 0 9.95 2.04V2a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.88v.05a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.03z"/>`),
