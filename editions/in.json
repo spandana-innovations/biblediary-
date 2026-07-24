@@ -1,0 +1,14 @@
+{
+  "id": "in",
+  "name": "God's Word",
+  "country": "India",
+  "origin": "https://godsword.in",
+  "translation": "ESV-CE",
+  "bundleId": "com.stpauls.godsword",
+  "locale": "en-IN",
+  "audioBaseUrl": "https://audio-in.godsword.in",
+  "fcmProject": "godsword-in",
+  "theme": {
+    "accent": "#ba372a"
+  }
+}

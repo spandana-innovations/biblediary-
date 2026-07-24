@@ -1,0 +1,14 @@
+{
+  "id": "ie",
+  "name": "Daily Liturgy",
+  "country": "Ireland",
+  "origin": "https://dailyliturgy.ie",
+  "translation": "Jerusalem Bible",
+  "bundleId": "com.stpauls.dailyliturgy",
+  "locale": "en-IE",
+  "audioBaseUrl": "https://audio-ie.dailyliturgy.ie",
+  "fcmProject": "dailyliturgy-ie",
+  "theme": {
+    "accent": "#2a5b8a"
+  }
+}

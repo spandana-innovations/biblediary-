@@ -1,0 +1,85 @@
+/*
+ * Base theme + liturgical colour theming (REBUILD_PLAN §8.2) and the semantic
+ * content classes (§7.3). Content ships as clean markup carrying meaning via
+ * classes; the theme restyles it — including for dark mode — without losing the
+ * distinction.
+ */
+:root {
+  --season: #4b5563; /* Ordinary Time default; overridden per data-season */
+  --bg: #ffffff;
+  --surface: #f7f7f5;
+  --text: #1a1a1a;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+
+  /* Semantic content roles */
+  --celebrant: #ba372a; /* priest's parts */
+  --rubric: #b026b0; /* stage directions */
+}
+
+/* Liturgical seasons tint --season; components read it for accents. Scoped to
+   [data-season] (not just :root) so a wrapper element themes statically, with
+   no client JS needed for correct prerendered colours. */
+[data-season="advent"],
+[data-season="lent"] {
+  --season: #6d28d9;
+} /* violet */
+[data-season="christmas"],
+[data-season="easter"] {
+  --season: #b8860b;
+} /* white/gold */
+[data-season="ordinary"] {
+  --season: #15803d;
+} /* green */
+[data-season="gaudete"],
+[data-season="laetare"] {
+  --season: #db6a8f;
+} /* rose */
+[data-season="feast"],
+[data-season="martyr"] {
+  --season: #b91c1c;
+} /* red */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121316;
+    --surface: #1c1e22;
+    --text: #e8e8e6;
+    --muted: #9ca3af;
+    --border: #2a2d33;
+    --celebrant: #e8776b; /* lifted for contrast on dark */
+    --rubric: #d98fd9;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+
+a {
+  color: var(--season);
+}
+
+/* --- Semantic content roles (see content/order-of-mass, intercessions) --- */
+.celebrant {
+  color: var(--celebrant);
+}
+.rubric {
+  color: var(--rubric);
+  font-style: italic;
+}
+/* The congregation's response is authored as **bold** → <strong>. */
+.liturgy strong {
+  font-weight: 700;
+}

@@ -17,6 +17,12 @@ public/asset/
 bettery1_biblediary_godsword.sql
 *.sql.gz
 
+# Build artifacts
+.svelte-kit/
+apps/web/build/
+# Static JSON API is generated from content/ by scripts/build-api.mjs
+apps/web/static/api/
+
 # OS / editor cruft
 .DS_Store
 Thumbs.db

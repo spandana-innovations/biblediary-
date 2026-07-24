@@ -1,0 +1,21 @@
+{
+  "name": "godsword",
+  "private": true,
+  "version": "0.0.0",
+  "description": "God's Word / Daily Liturgy — static, edition-aware daily-liturgy platform",
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "build:api": "node scripts/build-api.mjs",
+    "build:web": "pnpm --filter @godsword/web build",
+    "build": "pnpm build:api && pnpm build:web",
+    "dev": "pnpm build:api && pnpm --filter @godsword/web dev",
+    "check": "pnpm --filter @godsword/web check"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "gray-matter": "^4.0.3"
+  }
+}
