@@ -4,9 +4,12 @@
    quiet luxury, not decoration.
    ===================================================================== */
 
-@font-face { font-family: "Fraunces"; src: url("/fonts/fraunces.woff2") format("woff2"); font-weight: 400 600; font-style: normal; font-display: swap; }
+/* Self-hosted variable fonts, subset to Latin + liturgical punctuation and
+   instanced (opsz pinned, weight clamped to the range actually used) — see
+   scripts/subset-fonts.sh. Total ~150KB, ~67KB preloaded. */
+@font-face { font-family: "Fraunces"; src: url("/fonts/fraunces.woff2") format("woff2"); font-weight: 400 650; font-style: normal; font-display: swap; }
 @font-face { font-family: "Newsreader"; src: url("/fonts/newsreader.woff2") format("woff2"); font-weight: 400 700; font-style: normal; font-display: swap; }
-@font-face { font-family: "Newsreader"; src: url("/fonts/newsreader-italic.woff2") format("woff2"); font-weight: 400 600; font-style: italic; font-display: swap; }
+@font-face { font-family: "Newsreader"; src: url("/fonts/newsreader-italic.woff2") format("woff2"); font-weight: 400 700; font-style: italic; font-display: swap; }
 @font-face { font-family: "InterVar"; src: url("/fonts/inter.woff2") format("woff2"); font-weight: 400 700; font-style: normal; font-display: swap; }
 
 :root {
