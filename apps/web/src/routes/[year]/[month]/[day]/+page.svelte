@@ -5,6 +5,7 @@
   import { renderBody } from "$lib/api";
   import { seasonToken, seasonLabel } from "$lib/liturgical";
   import { icons } from "$lib/icons";
+  import { openCard } from "$lib/verseCard.svelte";
 
   let { data } = $props();
   const day = $derived(data.day);
@@ -27,6 +28,23 @@
   }
   const eyebrow = $derived(
     `${parts(day.date).line}${day.psalterWeek ? ` · Psalter Week ${["I", "II", "III", "IV"][(day.psalterWeek - 1) % 4]}` : ""}`
+  );
+
+  const heading = $derived(day.celebration ?? parts(day.date).line);
+  const desc = $derived(
+    `Readings for ${heading} (${parts(day.date).line}): first reading, responsorial psalm, gospel and reflection — ${day.translation}.`
+  );
+  const jsonLd = $derived(
+    JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: heading,
+      datePublished: day.date,
+      inLanguage: "en",
+      isPartOf: { "@type": "Periodical", name: "God's Word — Daily Liturgy" },
+      about: sections.map((s: { title: string }) => s.title),
+      articleSection: season
+    })
   );
 
   // reading-time estimate
@@ -93,8 +111,15 @@
 </script>
 
 <svelte:head>
-  <title>{day.celebration ?? day.date} — Daily Readings, {parts(day.date).line}</title>
-  <meta name="description" content={`Readings for ${day.celebration ?? day.date}: first reading, psalm, gospel and reflection.`} />
+  <title>{heading} — Daily Readings, {parts(day.date).line}</title>
+  <meta name="description" content={desc} />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content={`${heading} — Daily Readings`} />
+  <meta property="og:description" content={desc} />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content={`${heading} — Daily Readings`} />
+  <meta name="twitter:description" content={desc} />
+  {@html `<script type="application/ld+json">${jsonLd}<\/script>`}
 </svelte:head>
 
 <div class="progress" style="transform: scaleX({progress})" aria-hidden="true"></div>
@@ -131,6 +156,10 @@
               <button aria-label={speaking === s.key ? "Stop" : "Listen"} onclick={() => speak(s)}>
                 {@html speaking === s.key ? icons.stop : icons.sound}
               </button>
+              <button
+                aria-label="Share as image"
+                onclick={() => openCard({ title: s.title, ref: s.ref ?? s.title, text: plain(s.body), season, dateLine: parts(day.date).line })}
+              >{@html icons.share}</button>
             </div>
           </div>
           <div class="body" class:dropcap={hasDrop(s)}>{@html renderBody(s.body)}</div>

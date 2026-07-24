@@ -1,14 +1,33 @@
 <script lang="ts">
   import "../app.css";
   import { onMount } from "svelte";
+  import { onNavigate } from "$app/navigation";
   import { page } from "$app/stores";
   import { base } from "$app/paths";
   import { icons } from "$lib/icons";
   import { seasonToken, seasonLabel } from "$lib/liturgical";
   import { todayISO, nearestDate } from "$lib/api";
+  import Player from "$lib/Player.svelte";
+  import VerseCard from "$lib/VerseCard.svelte";
+  import CommandPalette from "$lib/CommandPalette.svelte";
+  import { openPalette } from "$lib/palette.svelte";
+  import { mass, toggleMass } from "$lib/massMode.svelte";
 
   let { data, children } = $props();
   let dark = $state(false);
+
+  // Cross-fade between pages via the View Transitions API (progressive; a no-op
+  // where unsupported or when the user prefers reduced motion).
+  onNavigate((navigation) => {
+    if (!(document as Document & { startViewTransition?: unknown }).startViewTransition) return;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    return new Promise((resolve) => {
+      (document as Document & { startViewTransition: (cb: () => Promise<void>) => void }).startViewTransition(async () => {
+        resolve();
+        await navigation.complete;
+      });
+    });
+  });
 
   onMount(() => {
     const saved = localStorage.getItem("theme");
@@ -66,6 +85,8 @@
   });
 </script>
 
+<a class="skip" href="#main">Skip to readings</a>
+
 <div class="missal" data-season={season}>
   <nav class="rail" aria-label="Primary">
     <a class="wordmark" href="{base}/"><span class="cross">✠</span><span class="wm">God's Word</span></a>
@@ -80,7 +101,7 @@
     </div>
   </nav>
 
-  <main class="content">
+  <main class="content" id="main" tabindex="-1">
     {@render children()}
   </main>
 
@@ -89,8 +110,17 @@
       <a class:active={activeKey === t.key} href={t.href}><span class="ic">{@html t.icon}</span>{t.label}</a>
     {/each}
   </nav>
+
+  <Player />
 </div>
 
+<CommandPalette />
+<VerseCard />
+
 <div class="controls">
+  {#if mass.active}
+    <button class="mass-exit" onclick={toggleMass} aria-label="Exit Mass Mode">{@html icons.close}<span>Exit Mass Mode</span></button>
+  {/if}
+  <button onclick={openPalette} aria-label="Search (⌘K)">{@html icons.search}</button>
   <button onclick={toggle} aria-label="Toggle Compline (night) mode">{@html dark ? icons.sun : icons.moon}</button>
 </div>

@@ -83,6 +83,18 @@ export interface SearchItem {
   url: string;
 }
 
+/** Group collection items by their `category`, preserving first-seen order. */
+export function groupByCategory(items: CollectionItem[]): { category: string; items: CollectionItem[] }[] {
+  const order: string[] = [];
+  const map = new Map<string, CollectionItem[]>();
+  for (const it of items) {
+    const cat = (it.category as string) || "Other";
+    if (!map.has(cat)) { map.set(cat, []); order.push(cat); }
+    map.get(cat)!.push(it);
+  }
+  return order.map((category) => ({ category, items: map.get(category)! }));
+}
+
 export const getIndex = (f: typeof fetch) => getJson<ApiIndex>(f, "index.json");
 export const getSearch = (f: typeof fetch) => getJson<{ items: SearchItem[] }>(f, "search.json").then((r) => r.items);
 export const getDay = (f: typeof fetch, date: string) => getJson<Day>(f, `days/${date}.json`);

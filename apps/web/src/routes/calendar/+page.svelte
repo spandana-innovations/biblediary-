@@ -1,5 +1,4 @@
 <script lang="ts">
-  import RedHeader from "$lib/RedHeader.svelte";
   import { base } from "$app/paths";
   import { icons } from "$lib/icons";
   import { todayISO, nearestDate } from "$lib/api";
@@ -25,6 +24,7 @@
     for (let d = 1; d <= count; d++) out.push(`${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`);
     return out;
   });
+  const hasThisMonth = $derived(cells.some((c) => c && available.has(c)));
 
   function shift(delta: number) {
     let m = month + delta;
@@ -37,40 +37,46 @@
   const monthsWithContent = $derived([...new Set(dates.map((d) => d.slice(0, 7)))].sort());
 </script>
 
-<svelte:head><title>Calendar</title></svelte:head>
+<svelte:head>
+  <title>Calendar — God's Word</title>
+  <meta name="description" content="Browse the liturgical calendar and jump to any day's readings." />
+</svelte:head>
 
-<RedHeader title="Calendar">
-  {#snippet children()}
-    <div class="monthbar">
-      <button class="mnav" onclick={() => shift(-1)} aria-label="Previous month">{@html icons.prev}</button>
-      <span class="ml">{MON[month]} {year}</span>
-      <button class="mnav" onclick={() => shift(1)} aria-label="Next month">{@html icons.next}</button>
-    </div>
-  {/snippet}
-</RedHeader>
+<div class="page-head">
+  <p class="eyebrow">The Liturgical Year</p>
+  <div class="monthbar">
+    <button class="mnav" onclick={() => shift(-1)} aria-label="Previous month">{@html icons.prev}</button>
+    <h1>{MON[month]} {year}</h1>
+    <button class="mnav" onclick={() => shift(1)} aria-label="Next month">{@html icons.next}</button>
+  </div>
+</div>
 
-<div class="sheet">
+<div class="page-body wide">
   <div class="grid dow">
-    {#each DOW as d}<span class="dowc">{d}</span>{/each}
+    {#each DOW as d, i}<span class="dowc">{d}<span class="sr">{["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][i]}</span></span>{/each}
   </div>
   <div class="grid">
     {#each cells as iso}
       {#if iso === null}
         <span class="cell empty"></span>
       {:else if available.has(iso)}
-        <a class="cell has" class:today={iso === today} href={href(iso)}>{Number(iso.slice(8))}</a>
+        <a class="cell has" class:today={iso === today} href={href(iso)} aria-label={`Readings for ${iso}`}>{Number(iso.slice(8))}</a>
       {:else}
         <span class="cell off" class:today={iso === today}>{Number(iso.slice(8))}</span>
       {/if}
     {/each}
   </div>
 
+  {#if !hasThisMonth}
+    <p class="none">No readings loaded for {MON[month]} {year} yet.</p>
+  {/if}
+
   {#if monthsWithContent.length}
-    <h2 class="sec-h">Jump to</h2>
+    <h2 class="jump-h">Jump to a month with readings</h2>
     <div class="jump">
       {#each monthsWithContent as ym}
         <button
-          class="chip"
+          class="chip" class:active={ym === `${year}-${String(month + 1).padStart(2, "0")}`}
           onclick={() => { year = Number(ym.slice(0, 4)); month = Number(ym.slice(5, 7)) - 1; }}
         >{MON[Number(ym.slice(5, 7)) - 1]} {ym.slice(0, 4)}</button>
       {/each}
@@ -79,34 +85,25 @@
 </div>
 
 <style>
-  .monthbar {
-    display: flex; align-items: center; justify-content: space-between; margin-top: 18px;
-    position: relative; z-index: 2;
-  }
-  .ml { font: 700 1.25rem var(--font-display); letter-spacing: -0.01em; }
-  .mnav {
-    width: 38px; height: 38px; border-radius: 50%; border: 0; cursor: pointer;
-    background: rgba(255, 255, 255, 0.16); color: #fff; display: grid; place-items: center;
-  }
+  .eyebrow { font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.18em; font-size: 0.7rem; font-weight: 600; color: var(--season-ink); margin: 0 0 12px; }
+  .monthbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 30rem; }
+  .monthbar h1 { font-family: var(--font-display); font-weight: 560; font-size: clamp(1.6rem, 4vw, 2.3rem); letter-spacing: -0.01em; margin: 0; text-align: center; }
+  .mnav { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--hairline); background: transparent; color: var(--season-ink); display: grid; place-items: center; cursor: pointer; flex-shrink: 0; }
   .mnav :global(svg) { width: 20px; height: 20px; }
-  .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-  .dow { margin-bottom: 6px; }
-  .dowc { text-align: center; color: var(--muted); font-size: 0.78rem; font-weight: 600; }
-  .cell {
-    aspect-ratio: 1; display: grid; place-items: center; border-radius: 12px;
-    font-size: 0.98rem; font-variant-numeric: tabular-nums;
-  }
-  .cell.off { color: var(--muted); opacity: 0.55; }
-  .cell.has {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 12%, var(--sheet)), color-mix(in srgb, var(--brand) 8%, var(--sheet)));
-    color: var(--brand); font-weight: 600; border: 1px solid color-mix(in srgb, var(--brand) 22%, transparent);
-  }
-  .cell.has:hover { box-shadow: var(--shadow-md); }
-  .cell.today { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+  .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; max-width: 34rem; }
+  .dow { margin: 20px 0 6px; }
+  .dowc { text-align: center; color: var(--muted); font-family: var(--font-ui); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .cell { aspect-ratio: 1; display: grid; place-items: center; border-radius: 10px; font-size: 0.98rem; font-family: var(--font-body); font-variant-numeric: tabular-nums; }
+  .cell.off { color: var(--muted); opacity: 0.5; }
+  .cell.has { color: var(--season-ink); font-weight: 640; border: 1px solid color-mix(in srgb, var(--season-ink) 26%, transparent); background: color-mix(in srgb, var(--season-ink) 7%, transparent); }
+  .cell.has:hover { background: var(--season-ink); color: var(--paper); }
+  .cell.today { outline: 2px solid var(--season-gold); outline-offset: 1px; }
+
+  .none { color: var(--muted); font-style: italic; margin: 18px 0 0; max-width: 34rem; text-align: center; }
+  .jump-h { font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.72rem; font-weight: 600; color: var(--muted); margin: 40px 0 12px; }
   .jump { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip {
-    border: 1px solid var(--hairline); background: var(--row); color: var(--text);
-    border-radius: 999px; padding: 8px 14px; font: 600 0.9rem var(--font-body); cursor: pointer;
-  }
-  .chip:hover { border-color: var(--brand); color: var(--brand); }
+  .chip { border: 1px solid var(--hairline); background: transparent; color: var(--ink); border-radius: 999px; padding: 8px 14px; font-family: var(--font-ui); font-size: 0.8rem; cursor: pointer; }
+  .chip:hover, .chip.active { border-color: var(--season-ink); color: var(--season-ink); }
 </style>

@@ -4,7 +4,15 @@ category: Holy Mass
 title: Ave Maria
 slug: ave-maria
 order: 3
-composer: Franz Schubert
+composer: Traditional · music Franz Schubert
 audio: null
 ---
-Ave Maria — Franz Schubert.
+Ave Maria, gratia plena,
+Dominus tecum.
+Benedicta tu in mulieribus,
+et benedictus fructus ventris tui, Iesus.
+
+Sancta Maria, Mater Dei,
+ora pro nobis peccatoribus,
+nunc et in hora mortis nostræ.
+Amen.

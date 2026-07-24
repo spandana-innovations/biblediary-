@@ -26,5 +26,12 @@ export const icons = {
   sound: s(`<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12"/>`),
   stop: s(`<rect x="6" y="6" width="12" height="12" rx="2.5"/>`),
   sun: s(`<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M5 12H3M21 12h-2M6 6l1.5 1.5M16.5 16.5L18 18M6 18l1.5-1.5M16.5 7.5L18 6"/>`),
-  moon: s(`<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>`)
+  moon: s(`<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>`),
+  pause: s(`<rect x="6.5" y="5" width="3.5" height="14" rx="1"/><rect x="14" y="5" width="3.5" height="14" rx="1"/>`),
+  close: s(`<path d="M6 6l12 12M18 6L6 18"/>`),
+  download: s(`<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/>`),
+  expand: s(`<path d="M9 4H5v4M15 4h4v4M9 20H5v-4M15 20h4v-4"/>`),
+  candle: s(`<path d="M12 3c1.2 1 1.2 2.4 0 3.4C10.8 5.4 10.8 4 12 3z"/><rect x="9.5" y="8" width="5" height="12" rx="1"/><path d="M8 20h8"/>`),
+  chevronRight: s(`<path d="M9 6l6 6-6 6"/>`),
+  command: s(`<path d="M9 9V7.5A2.5 2.5 0 1 0 6.5 10H9zm0 0v6m0-6h6M9 15v1.5A2.5 2.5 0 1 1 6.5 14H9zm6 0v1.5a2.5 2.5 0 1 0 2.5-2.5H15zm0 0V9m0 0h1.5A2.5 2.5 0 1 0 14 6.5V9z"/>`)
 };
