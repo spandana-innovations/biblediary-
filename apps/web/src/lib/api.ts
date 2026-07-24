@@ -50,9 +50,27 @@ export interface CollectionItem {
   [k: string]: unknown;
 }
 
+/**
+ * Tags the renderer is allowed to emit. Everything else is stripped.
+ *
+ * Bodies come from a database that has carried injected code before, and they
+ * are rendered with {@html}, so this is a hard boundary rather than a tidy-up:
+ * import sanitises, and this sanitises again at the point of injection.
+ */
+const ALLOWED = /^<\/?(?:p|br|em|strong|blockquote|ul|ol|li|h[1-6]|hr)(?:\s*\/)?>$/i;
+const ALLOWED_SPAN = /^<span class="(?:celebrant|rubric|resp-label|speaker|subhead)">$/;
+
+function sanitize(html: string): string {
+  return html.replace(/<[^>]*>/g, (tag) => {
+    if (ALLOWED.test(tag)) return tag;
+    if (ALLOWED_SPAN.test(tag) || tag === "</span>") return tag;
+    return "";
+  });
+}
+
 /** Render an authored markdown body to HTML, preserving inline semantic spans. */
 export function renderBody(md: string): string {
-  return marked.parse(md ?? "", { async: false }) as string;
+  return sanitize(marked.parse(md ?? "", { async: false }) as string);
 }
 
 /** Local calendar date as YYYY-MM-DD (runtime "today"). */

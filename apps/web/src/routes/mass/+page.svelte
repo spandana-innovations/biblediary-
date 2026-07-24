@@ -95,7 +95,7 @@
           class="mm-step" onclick={() => step(-1)} disabled={at <= 0 || loading}
           aria-label="Previous day">{@html icons.minus}</button>
 
-        <span class="mm-tag">{season !== "neutral" ? seasonLabel(season) : "Today’s Mass"}</span>
+        <span class="mm-tag">{seasonLabel(season, day?.season) || "Today’s Mass"}</span>
 
         <button
           class="mm-step" onclick={() => step(1)} disabled={at < 0 || at >= dates.length - 1 || loading}

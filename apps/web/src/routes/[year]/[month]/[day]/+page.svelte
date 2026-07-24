@@ -155,7 +155,7 @@
       <p class="eyebrow">{eyebrow}</p>
       <h1>{heading}</h1>
       <p class="meta">
-        {#if season !== "neutral"}<span class="sea">{seasonLabel(season)}</span>{/if}
+        {#if seasonLabel(season, day.season)}<span class="sea">{seasonLabel(season, day.season)}</span>{/if}
         <span class="dot">·</span><span>≈ {minutes} min</span>
         {#if settings.priestMode}<span class="dot">·</span><span class="pm">Priest mode</span>{/if}
       </p>
@@ -247,8 +247,9 @@
   .meta .dot { opacity: 0.5; }
 
   /* ---- date selector, below the intro ---- */
+  /* Never wraps: the arrows hold their size and the date shrinks. */
   .datebar {
-    display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+    display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: nowrap;
     max-width: 52rem; margin: 0 auto; padding: 18px clamp(20px, 5vw, 60px) 0;
   }
   .datebar .arrow, .picker {
@@ -261,9 +262,10 @@
   .datebar :global(svg) { width: 18px; height: 18px; }
   .picker {
     position: relative; cursor: pointer; color: var(--ink);
-    padding: 0 18px; font-size: 0.88rem; letter-spacing: 0.01em; min-width: 0;
+    padding: 0 18px; font-size: 0.88rem; letter-spacing: 0.01em;
+    min-width: 0; flex: 0 1 auto;
   }
-  .picker .pl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .picker .pl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .picker input {
     position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer;
     border: 0; padding: 0;
@@ -285,7 +287,9 @@
   }
   .day-rail button.on { color: var(--season-ink); border-left-color: var(--season-ink); }
 
+  /* Anchor jumps must clear the sticky section rail. */
   section { scroll-margin-top: 24px; }
+  @media (max-width: 1023px) { section { scroll-margin-top: 122px; } }
   .sec-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
   .label {
     font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.72rem;
@@ -323,19 +327,27 @@
   @media (max-width: 1023px) {
     .day { grid-template-columns: 1fr; gap: 0; max-width: none; }
     .day-main { grid-column: 1; }
+    /* On narrow screens the section links become a floating pill rail that
+       sits BELOW the header, clear of the controls entirely, rather than a
+       full-bleed strip that ran underneath them. */
     .day-rail {
-      grid-column: 1; order: -1; position: sticky; top: 0; z-index: 30; grid-auto-flow: column; justify-content: start;
-      gap: 18px; overflow-x: auto; padding: 12px 0 14px; margin-bottom: 8px;
+      grid-column: 1; order: -1;
+      /* 62px clears the floating controls (top: 14px + 40px tall), so the
+         rail parks underneath them instead of sliding beneath them. */
+      position: sticky; top: 62px; z-index: 30;
+      grid-auto-flow: column; justify-content: start; align-items: center;
+      gap: 6px; overflow-x: auto; scrollbar-width: none;
+      margin: 0 0 18px; padding: 5px;
       background: color-mix(in srgb, var(--paper) 90%, var(--season-wash));
-      border-bottom: 1px solid var(--hairline);
-      /* Keep the strip clear of the floating controls in the top-right, and
-         let it scroll fully rather than disappearing beneath them. */
-      padding-right: 152px;
-      scroll-padding-right: 152px;
-      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 150px), transparent calc(100% - 30px));
-      mask-image: linear-gradient(to right, #000 calc(100% - 150px), transparent calc(100% - 30px));
+      border: 1px solid var(--hairline); border-radius: 999px;
+      box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--season-deep) 35%, transparent);
+      backdrop-filter: blur(10px);
     }
-    .day-rail button { border-left: 0; border-bottom: 2px solid transparent; white-space: nowrap; padding: 4px 0; }
-    .day-rail button.on { border-left: 0; border-bottom-color: var(--season-ink); }
+    .day-rail::-webkit-scrollbar { display: none; }
+    .day-rail button {
+      border: 0; border-radius: 999px; white-space: nowrap;
+      padding: 8px 14px; font-size: 0.66rem; letter-spacing: 0.06em;
+    }
+    .day-rail button.on { background: var(--season-ink); color: var(--paper); }
   }
 </style>

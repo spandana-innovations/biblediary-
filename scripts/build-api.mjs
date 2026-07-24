@@ -64,6 +64,15 @@ function write(relPath, obj) {
   return relPath;
 }
 
+// Saint portraits resolved offline by scripts/fetch-saint-images.mjs. Folded
+// in here so the app never has to reach Wikimedia at runtime.
+let saintImages = {};
+try {
+  saintImages = JSON.parse(readFileSync(join(ROOT, "content", "saints.json"), "utf8"));
+} catch {
+  /* not resolved yet — the Saint page falls back to a typographic medallion */
+}
+
 const emitted = [];
 
 // ---- Days -----------------------------------------------------------------
@@ -86,14 +95,23 @@ for (const doc of dayDocs) {
     // Section extras (saintName, saintImage, saintYears, saintFeast,
     // saintPatronage, …) are passed straight through so the Saint page can
     // render a dossier without a second content type.
-    sections: (doc.data.sections ?? []).map(({ key, title, ref, audio, body, ...rest }) => ({
-      ...rest,
-      key,
-      title,
-      ref: ref ?? null,
-      audio: audioUrl(audio ?? null),
-      body: (body ?? "").trim()
-    }))
+    sections: (doc.data.sections ?? []).map(({ key, title, ref, audio, body, ...rest }) => {
+      const section = {
+        ...rest,
+        key,
+        title,
+        ref: ref ?? null,
+        audio: audioUrl(audio ?? null),
+        body: (body ?? "").trim()
+      };
+      const art = key === "saint" && rest.saintName ? saintImages[String(rest.saintName).trim()] : null;
+      if (art?.image) {
+        section.saintImage = art.image;
+        section.saintCredit = [art.artist, art.licence].filter(Boolean).join(" · ");
+        section.saintSource = art.page ?? null;
+      }
+      return section;
+    })
   };
   emitted.push(write(`days/${date}.json`, day));
   const [y, m] = date.split("-");

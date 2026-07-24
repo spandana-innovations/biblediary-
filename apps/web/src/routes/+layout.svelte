@@ -95,7 +95,7 @@
       </a>
     {/each}
     <div class="rail-foot">
-      <span class="fdate">{fdate()}{season !== "neutral" ? ` · ${seasonLabel(season)}` : ""}</span>
+      <span class="fdate">{fdate()}{seasonLabel(season, dayData?.season) ? ` · ${seasonLabel(season, dayData?.season)}` : ""}</span>
       <span class="fed">{data.index?.edition?.country}{settings.priestMode ? " · Priest mode" : ""}</span>
     </div>
   </nav>

@@ -140,21 +140,23 @@
   .crumb :global(svg) { width: 15px; height: 15px; }
 
   /* ---- tiles ---- */
+  /* Two tiles to a row on phones, then as many as fit. */
   .tiles {
     list-style: none; margin: 14px 0 0; padding: 0;
-    display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  @media (min-width: 640px) { .tiles { gap: 14px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); } }
   .tile {
-    width: 100%; min-height: 168px; cursor: pointer; text-align: left;
-    display: grid; align-content: space-between; gap: 14px; padding: 22px;
+    width: 100%; min-height: 148px; cursor: pointer; text-align: left;
+    display: grid; align-content: space-between; gap: 12px; padding: 18px;
     border: 1px solid var(--hairline); border-radius: 16px; color: inherit;
     background: linear-gradient(165deg, color-mix(in srgb, var(--season-ink) 7%, transparent), transparent);
     transition: border-color 0.18s ease, transform 0.18s ease;
   }
   .tile:hover { border-color: var(--season-ink); transform: translateY(-2px); }
   .tile-ic { color: var(--season-gold); display: grid; }
-  .tile-ic :global(svg) { width: 30px; height: 30px; stroke-width: 1.4; }
-  .tile-t { font-family: var(--font-display); font-weight: 560; font-size: 1.35rem; line-height: 1.15; letter-spacing: -0.01em; }
+  .tile-ic :global(svg) { width: 26px; height: 26px; stroke-width: 1.4; }
+  .tile-t { font-family: var(--font-display); font-weight: 560; font-size: clamp(1.05rem, 3.6vw, 1.35rem); line-height: 1.15; letter-spacing: -0.01em; }
   .tile-n { font-family: var(--font-ui); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
 
   /* ---- list ---- */

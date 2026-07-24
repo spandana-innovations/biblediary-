@@ -25,6 +25,8 @@
   const meta = $derived((saint ?? {}) as Section & {
     saintName?: string;
     saintImage?: string;
+    saintCredit?: string;
+    saintSource?: string;
     saintYears?: string;
     saintPatronage?: string;
     saintFeast?: string;
@@ -70,6 +72,13 @@
           <div class="medallion" aria-hidden="true"><span>{initial}</span></div>
         {/if}
         {#if meta.saintYears}<figcaption>{meta.saintYears}</figcaption>{/if}
+        {#if meta.saintImage && !imgFailed && meta.saintCredit}
+          <figcaption class="credit">
+            {#if meta.saintSource}
+              <a href={meta.saintSource} target="_blank" rel="noopener noreferrer">{meta.saintCredit}</a>
+            {:else}{meta.saintCredit}{/if}
+          </figcaption>
+        {/if}
       </figure>
 
       {#if meta.saintPatronage || meta.saintFeast}
@@ -108,6 +117,8 @@
     color: var(--season-ink); line-height: 1;
   }
   .portrait figcaption { font-family: var(--font-ui); font-size: 0.76rem; color: var(--muted); letter-spacing: 0.04em; }
+  .portrait .credit { font-size: 0.66rem; opacity: 0.75; max-width: 24rem; text-align: center; line-height: 1.4; }
+  .portrait .credit a { text-decoration: underline; text-underline-offset: 2px; }
 
   .dossier {
     display: grid; gap: 14px; margin: 0 0 28px; padding: 18px 0;

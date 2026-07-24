@@ -193,11 +193,17 @@ function clean(html) {
   if (!html) return "";
   let s = html;
 
-  // Coloured spans: keep the label semantics, drop the colour.
+  // Coloured spans: keep the label semantics, drop the colour. Kept spans are
+  // parked as sentinels so the blanket tag-strip below cannot touch them —
+  // the source has ~90k orphaned </span> closers that would otherwise survive.
+  const keep = [];
   s = s.replace(/<span[^>]*color\s*:[^>]*>([\s\S]*?)<\/span>/gi, (_m, inner) => {
     const text = decode(inner.replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim();
     const hit = LABELS.find((l) => l.re.test(text.replace(/[:\s]+$/, "")));
-    return hit ? `<span class="${hit.cls}">${inner}</span>` : inner;
+    if (!hit) return inner;
+    const plain = inner.replace(/<[^>]+>/g, "");
+    keep.push(`<span class="${hit.cls}">${plain}</span>`);
+    return `\u0000${keep.length - 1}\u0001`;
   });
 
   s = s.replace(/<(strong|b)\b[^>]*>([\s\S]*?)<\/\1>/gi, (_m, _t, i) => {
@@ -212,9 +218,10 @@ function clean(html) {
   s = s.replace(/<\/(p|div|h[1-6]|li)\s*>/gi, "\n\n");
   s = s.replace(/<li\b[^>]*>/gi, "- ");
 
-  // Drop every remaining tag except the semantic spans built above.
-  s = s.replace(/<span(?![^>]*class=")[^>]*>/gi, "");
-  s = s.replace(/<(?!\/?span\b)[^>]*>/gi, "");
+  // Nothing else may carry markup through: strip every remaining tag,
+  // opener or closer, then restore the parked semantic spans.
+  s = s.replace(/<[^>]*>/g, "");
+  s = s.replace(/\u0000(\d+)\u0001/g, (_m, i) => keep[Number(i)] ?? "");
 
   s = decode(s);
   // Collapse the artefacts of nested markup.
@@ -304,6 +311,38 @@ function seasonOf(title) {
   return null;
 }
 
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const BARE_SEASON = /^(ordinary time|lent|advent|easter|easter time|christmas|christmas time|holy week)$/i;
+
+/**
+ * The day's proper title.
+ *
+ * `saint_title` carries the liturgical day ("16th Week in Ordinary Time",
+ * "31st Sunday in Ordinary Time", "THE HOLY TRINITY – Solemnity") while
+ * `msg_day` carries the optional memorial ("Saint Francis Solano"). The page
+ * heading must be the former; the memorial is a sub-line.
+ */
+function dayTitle(week, memorial, dateISO) {
+  const w = normaliseDashes((week ?? "").trim());
+  const m = normaliseDashes((memorial ?? "").trim());
+  if (!w) return m || null;
+
+  // "16th Week in Ordinary Time" names a week, not a day — add the weekday.
+  if (/\bweek\s+(in|of)\b/i.test(w) && !/\b(sun|mon|tues|wednes|thurs|fri|satur)day\b/i.test(w)) {
+    const [y, mo, d] = dateISO.split("-").map(Number);
+    return `${WEEKDAYS[new Date(Date.UTC(y, mo - 1, d)).getUTCDay()]} of the ${w}`;
+  }
+  // A bare season name says nothing about the day; the memorial is the title.
+  if (BARE_SEASON.test(w)) return m || w;
+  // Otherwise it already names the celebration.
+  return w;
+}
+
+/** The source frequently omits the spaces around an en/em dash. */
+function normaliseDashes(s) {
+  return s.replace(/\s*([–—])\s*/g, " $1 ").replace(/\s{2,}/g, " ").trim();
+}
+
 // ---- Build in memory, then write ------------------------------------------
 const out = [];
 let skippedEmpty = 0, skippedDate = 0;
@@ -327,9 +366,12 @@ for (const r of records) {
   }
   if (!sections.length) { skippedEmpty++; continue; }
 
-  const seasonTitle = (get("saint_title") ?? "").trim();
+  const seasonTitle = normaliseDashes((get("saint_title") ?? "").trim());
   const season = seasonOf(seasonTitle);
-  const celebration = clean(get("msg_day") ?? "").split("\n")[0].replace(/\*+/g, "").trim();
+  const memorial = normaliseDashes(
+    clean(get("msg_day") ?? "").split("\n")[0].replace(/\*+/g, "").trim()
+  );
+  const celebration = dayTitle(seasonTitle, memorial, date);
   const codes = String(get("colors") ?? "").split(",").map((c) => c.trim()).filter(Boolean);
   const colour = codes.length ? COLOUR_CODE[codes[0]] ?? null : null;
   const psalter = parseInt(get("plstr_week") ?? "", 10);
@@ -342,6 +384,7 @@ for (const r of records) {
     seasonTitle ? `week: ${yaml(seasonTitle)}` : null,
     colour ? `liturgicalColor: ${yaml(colour)}` : null,
     celebration ? `celebration: ${yaml(celebration)}` : null,
+    memorial && memorial !== celebration ? `memorial: ${yaml(memorial)}` : null,
     Number.isFinite(psalter) && psalter > 0 ? `psalterWeek: ${psalter}` : null,
     "sections:"
   ].filter(Boolean);

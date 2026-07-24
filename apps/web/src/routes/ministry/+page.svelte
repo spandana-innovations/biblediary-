@@ -54,7 +54,14 @@
 
   // ---- prayers block ----
   const groups = $derived(groupByCategory(data.prayers));
+
+  /** Landing shows three blocks; picking one opens its own flow. */
+  let view = $state<"home" | "homily" | "reflection" | "prayers">("home");
   let cat = $state<string | null>(null);
+  function back() {
+    if (view === "prayers" && cat) cat = null;
+    else view = "home";
+  }
   let open = $state<CollectionItem | null>(null);
   const current = $derived(groups.find((g) => g.category === cat) ?? null);
 
@@ -92,9 +99,40 @@
   {#if !settings.priestMode}
     <p class="note">Priest mode is off — turn it on in Settings to keep this section.</p>
   {/if}
+  {#if view !== "home"}
+    <button class="crumb" onclick={back}>{@html icons.prev}<span>{view === "prayers" && cat ? "All categories" : "Ministry"}</span></button>
+  {/if}
 </div>
 
 <div class="page-body wide">
+  {#if view === "home"}
+    <!-- Landing: three blocks -->
+    <ul class="tiles">
+      <li>
+        <button class="tile" onclick={() => (view = "homily")}>
+          <span class="tile-ic">{@html icons.quote}</span>
+          <span class="tile-t">Homily Tips</span>
+          <span class="tile-n">For the day’s Gospel</span>
+        </button>
+      </li>
+      <li>
+        <button class="tile" onclick={() => (view = "reflection")}>
+          <span class="tile-ic">{@html icons.book}</span>
+          <span class="tile-t">Reflections</span>
+          <span class="tile-n">Daily commentary</span>
+        </button>
+      </li>
+      <li>
+        <button class="tile" onclick={() => (view = "prayers")}>
+          <span class="tile-ic">{@html icons.beads}</span>
+          <span class="tile-t">Prayers</span>
+          <span class="tile-n">{data.prayers.length} in {groups.length} categories</span>
+        </button>
+      </li>
+    </ul>
+  {/if}
+
+  {#if view === "homily"}
   <!-- 1. Homily tips, with its own date selector -->
   <section class="block">
     <header class="bh">
@@ -119,15 +157,26 @@
       <p class="empty">No homily tip recorded for this day.</p>
     {/if}
   </section>
+  {/if}
 
-  <div class="leaf"><span class="g">❧</span></div>
-
+  {#if view === "reflection"}
   <!-- 2. Reflection for the same day -->
   <section class="block">
     <header class="bh">
       <span class="bh-ic">{@html icons.book}</span>
       <h2>Reflection</h2>
     </header>
+
+    <nav class="datebar" aria-label="Choose a day">
+      <button class="arrow" onclick={() => step(-1)} disabled={at <= 0 || loading} aria-label="Previous day">{@html icons.prev}</button>
+      <label class="picker">
+        {@html icons.calendar}
+        <span class="pl">{dateLine(day?.date)}</span>
+        <input type="date" value={day?.date ?? ""} onchange={pickDate} aria-label="Jump to a date" />
+      </label>
+      <button class="arrow" onclick={() => step(1)} disabled={at < 0 || at >= dates.length - 1 || loading} aria-label="Next day">{@html icons.next}</button>
+    </nav>
+
     {#if reflection}
       <div class="prose reading">{@html renderBody(reflection.body)}</div>
     {:else}
@@ -135,17 +184,14 @@
     {/if}
     <a class="more" href="{base}/{(day?.date ?? '').replaceAll('-', '/')}/">Full readings for this day →</a>
   </section>
+  {/if}
 
-  <div class="leaf"><span class="g">❧</span></div>
-
+  {#if view === "prayers"}
   <!-- 3. Prayers, as on the Prayers page -->
   <section class="block">
     <header class="bh">
       <span class="bh-ic">{@html icons.beads}</span>
-      <h2>Prayers</h2>
-      {#if cat}
-        <button class="crumb" onclick={() => (cat = null)}>{@html icons.prev}<span>All</span></button>
-      {/if}
+      <h2>{cat ?? "Prayers"}</h2>
     </header>
 
     {#if !cat}
@@ -174,6 +220,7 @@
       </ul>
     {/if}
   </section>
+  {/if}
 </div>
 
 {#if open}
@@ -241,18 +288,19 @@
   }
   .crumb :global(svg) { width: 14px; height: 14px; }
 
-  .tiles { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .tiles { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 640px) { .tiles { gap: 14px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); } }
   .tile {
-    width: 100%; min-height: 168px; cursor: pointer; text-align: left;
-    display: grid; align-content: space-between; gap: 14px; padding: 22px;
+    width: 100%; min-height: 148px; cursor: pointer; text-align: left;
+    display: grid; align-content: space-between; gap: 12px; padding: 18px;
     border: 1px solid var(--hairline); border-radius: 16px; color: inherit;
     background: linear-gradient(165deg, color-mix(in srgb, var(--season-ink) 7%, transparent), transparent);
     transition: border-color 0.18s ease, transform 0.18s ease;
   }
   .tile:hover { border-color: var(--season-ink); transform: translateY(-2px); }
   .tile-ic { color: var(--season-gold); display: grid; }
-  .tile-ic :global(svg) { width: 30px; height: 30px; stroke-width: 1.4; }
-  .tile-t { font-family: var(--font-display); font-weight: 560; font-size: 1.35rem; line-height: 1.15; letter-spacing: -0.01em; }
+  .tile-ic :global(svg) { width: 26px; height: 26px; stroke-width: 1.4; }
+  .tile-t { font-family: var(--font-display); font-weight: 560; font-size: clamp(1.05rem, 3.6vw, 1.35rem); line-height: 1.15; letter-spacing: -0.01em; }
   .tile-n { font-family: var(--font-ui); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
 
   .plist { list-style: none; margin: 0; padding: 0; }
