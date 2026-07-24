@@ -34,7 +34,7 @@
           <div class="t">{h.title}</div>
           <div class="s">{(h.composer as string) ?? "by St Paul's"}</div>
         </div>
-        <button class="play" aria-label={`Play ${h.title}`}>▶</button>
+        <button class="play" aria-label={`Play ${h.title}`}>{@html icons.play}</button>
       </div>
     {/each}
   </div>

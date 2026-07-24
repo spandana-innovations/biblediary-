@@ -55,6 +55,20 @@ export function renderBody(md: string): string {
   return marked.parse(md ?? "", { async: false }) as string;
 }
 
+/** Local calendar date as YYYY-MM-DD (runtime "today"). */
+export function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** The available date closest to `target` (exact match wins), or null if none. */
+export function nearestDate(dates: string[], target: string): string | null {
+  if (!dates.length) return null;
+  if (dates.includes(target)) return target;
+  const t = Date.parse(target);
+  return [...dates].sort((a, b) => Math.abs(Date.parse(a) - t) - Math.abs(Date.parse(b) - t))[0];
+}
+
 async function getJson<T>(fetchFn: typeof fetch, path: string): Promise<T> {
   const res = await fetchFn(`${base}/api/v1/${path}`);
   if (!res.ok) throw new Error(`${path} ${res.status}`);

@@ -1,10 +1,11 @@
 <script lang="ts">
   import { base } from "$app/paths";
+  import { todayISO, nearestDate } from "$lib/api";
   let { data } = $props();
 
-  // Center disc opens the most recent available day.
-  const latest = $derived([...(data.index?.dates ?? [])].sort().at(-1) ?? null);
-  const dayHref = $derived(latest ? `${base}/${latest.replaceAll("-", "/")}/` : `${base}/`);
+  // Center disc opens today's readings (nearest available date).
+  const today = $derived(nearestDate(data.index?.dates ?? [], todayISO()));
+  const dayHref = $derived(today ? `${base}/${today.replaceAll("-", "/")}/` : `${base}/`);
 </script>
 
 <svelte:head><title>{data.index?.edition?.name ?? "God's Word"}</title></svelte:head>
@@ -16,8 +17,7 @@
         <stop offset="0" stop-color="#d1332f" />
         <stop offset="1" stop-color="#a5161b" />
       </linearGradient>
-      <path id="arcMore" d="M 108 372 A 96 96 0 0 0 176 452" fill="none" />
-      <path id="arcAbout" d="M 224 452 A 96 96 0 0 0 292 372" fill="none" />
+      <path id="arcAbout" d="M 150 440 A 98 98 0 0 0 250 440" fill="none" />
     </defs>
 
     <g transform="translate(16,20)" opacity="0.16">
@@ -50,17 +50,14 @@
     </a>
 
     <circle cx="200" cy="352" r="96" fill="#2b2b2f" />
-    <a href="{base}/more/" aria-label="More Apps">
-      <text class="arc-label"><textPath href="#arcMore" startOffset="6%">MORE APPS</textPath></text>
-    </a>
     <a href="{base}/about/" aria-label="About Us">
-      <text class="arc-label"><textPath href="#arcAbout" startOffset="6%">ABOUT US</textPath></text>
+      <text class="arc-label" text-anchor="middle"><textPath href="#arcAbout" startOffset="50%">ABOUT US</textPath></text>
     </a>
 
     <a href={dayHref} class="hit" aria-label="Today's readings">
       <circle cx="200" cy="318" r="83" fill="#ffffff" />
-      <text class="logo-script" x="200" y="309" font-size="41">God's</text>
-      <text class="logo-script" x="200" y="351" font-size="41">Word</text>
+      <text class="logo-word" x="200" y="308" font-size="38">God's</text>
+      <text class="logo-word" x="200" y="352" font-size="38">Word</text>
     </a>
   </svg>
 </div>
@@ -78,7 +75,7 @@
   .arm-label { fill: #fff; font-family: var(--font-body); font-weight: 700; text-anchor: middle; }
   .arm-label.sub { font-weight: 600; }
   .arc-label { fill: rgba(255, 255, 255, 0.72); font: 600 12px var(--font-body); letter-spacing: 1.5px; }
-  .logo-script { fill: var(--brand); font-family: var(--font-script); font-style: italic; text-anchor: middle; }
+  .logo-word { fill: var(--brand); font-family: var(--font-display); font-weight: 800; letter-spacing: -1.5px; text-anchor: middle; }
   .hit { cursor: pointer; }
   .hit:hover .petal { filter: brightness(1.08); }
   a { -webkit-tap-highlight-color: transparent; }

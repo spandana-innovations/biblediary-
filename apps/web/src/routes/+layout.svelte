@@ -4,6 +4,7 @@
   import { page } from "$app/stores";
   import { base } from "$app/paths";
   import { icons } from "$lib/icons";
+  import { todayISO, nearestDate } from "$lib/api";
 
   let { data, children } = $props();
   let dark = $state(false);
@@ -24,28 +25,31 @@
     localStorage.setItem("theme", t);
   }
 
-  const latest = $derived([...(data.index?.dates ?? [])].sort().at(-1) ?? null);
-  const todayHref = $derived(latest ? `${base}/${latest.replaceAll("-", "/")}/` : `${base}/`);
+  const today = $derived(nearestDate(data.index?.dates ?? [], todayISO()));
+  const todayHref = $derived(today ? `${base}/${today.replaceAll("-", "/")}/` : `${base}/`);
   const nav = $derived([
     { href: todayHref, label: "Today's Readings", icon: icons.book },
     { href: `${base}/order-of-mass/`, label: "Order of Mass", icon: icons.church },
     { href: `${base}/hymns/`, label: "Popular Hymns", icon: icons.note },
     { href: `${base}/prayers/`, label: "Prayer Collection", icon: icons.beads },
     { href: `${base}/homily/`, label: "Homily Tips", icon: icons.quote },
-    { href: `${base}/about/`, label: "About Us", icon: icons.info },
-    { href: `${base}/more/`, label: "More Apps", icon: icons.grid }
+    { href: `${base}/about/`, label: "About Us", icon: icons.info }
   ]);
   const path = $derived($page.url.pathname);
   const isActive = (href: string) => href !== `${base}/` && path.startsWith(href);
 </script>
 
 <button class="theme-toggle" onclick={toggle} aria-label="Toggle light or dark theme">
-  {dark ? "☀ Light" : "☾ Dark"}
+  <span class="tt-ic">{@html dark ? icons.sun : icons.moon}</span>
+  <span>{dark ? "Light" : "Dark"}</span>
 </button>
 
 <div class="shell">
   <aside class="sidebar">
-    <a class="brand" href="{base}/"><span class="logo">God's Word</span></a>
+    <a class="brand" href="{base}/">
+      <span class="mark">{@html icons.book}</span>
+      <span class="logo">God's Word</span>
+    </a>
     <nav>
       {#each nav as item}
         <a class="navlink" class:active={isActive(item.href)} href={item.href}>

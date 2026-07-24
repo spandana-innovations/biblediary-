@@ -32,7 +32,7 @@
     {#each data.items as p, i}
       <div class="arow" class:open={open === i}>
         <button aria-expanded={open === i} onclick={() => (open = open === i ? null : i)}>
-          <span>{p.title}</span><span class="chev">⌄</span>
+          <span>{p.title}</span><span class="chev">{@html icons.chevron}</span>
         </button>
         {#if open === i}
           <div class="panel liturgy">{@html renderBody(p.body)}</div>
