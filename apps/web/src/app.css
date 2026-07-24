@@ -226,8 +226,29 @@ a { color: inherit; text-decoration: none; }
 /* reading typography */
 .reading p { margin: 0 0 1.05em; max-width: var(--measure); }
 .reading strong { font-weight: 640; }
-.celebrant { color: var(--brand-red); }
+/* Semantic labels carried over from the legacy content. The source used a
+   dozen different editor colours for the same handful of labels, so meaning is
+   keyed on the label text at import time and styled consistently here. */
+.celebrant { color: var(--brand-red); font-weight: 600; }
 .rubric { color: color-mix(in srgb, var(--season-ink) 82%, var(--ink)); font-style: italic; }
+/* "Response:" before the people's part */
+.resp-label {
+  font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.1em;
+  font-size: 0.68em; font-weight: 600; color: var(--season-ink);
+  margin-right: 0.5em; white-space: nowrap;
+}
+/* Passion narrative speakers — Narrator, Jesus, Crowd, Pilate … */
+.speaker {
+  font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.08em;
+  font-size: 0.68em; font-weight: 600; color: var(--brand-red);
+  margin-right: 0.5em; white-space: nowrap;
+}
+/* Sub-headings inside reflections — "Life Messages:", "The Context:" */
+.subhead {
+  display: block; font-family: var(--font-ui); text-transform: uppercase;
+  letter-spacing: 0.1em; font-size: 0.7em; font-weight: 600;
+  color: var(--season-gold); margin: 1.4em 0 0.3em;
+}
 
 /* shared page furniture */
 .page-head .eyebrow {

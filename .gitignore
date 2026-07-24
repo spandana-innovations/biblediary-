@@ -26,3 +26,8 @@ apps/web/static/api/
 # OS / editor cruft
 .DS_Store
 Thumbs.db
+
+# Legacy SQL dumps — production data, never commit (see docs/security-hardening.md)
+*.sql
+*.sql.gz
+*.sql.zip
