@@ -98,7 +98,7 @@ a { color: inherit; text-decoration: none; }
 .theme-toggle {
   position: fixed;
   top: 14px;
-  right: max(14px, calc(50vw - 230px + 14px));
+  right: 14px;
   z-index: 50;
   border: 1px solid rgba(140, 120, 118, 0.35);
   background: var(--sheet);
@@ -208,5 +208,43 @@ a { color: inherit; text-decoration: none; }
 .approw .meta { flex: 1; }
 .approw .t { font-weight: 600; font-size: 1.15rem; }
 .approw .s { color: var(--muted); font-size: 0.9rem; }
+
+/* ---------- Desktop shell: sidebar nav + wide reading pane ---------- */
+.sidebar { display: none; }
+.brand { display: block; padding: 2px 12px 20px; }
+.brand .logo { font-family: var(--font-script); font-style: italic; color: var(--brand); font-size: 1.85rem; }
+.sidebar nav { display: flex; flex-direction: column; gap: 4px; }
+.navlink {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 12px; border-radius: 12px;
+  color: var(--text); font-weight: 500; font-size: 0.98rem;
+}
+.navlink .ic { color: var(--muted); display: grid; }
+.navlink .ic svg { width: 22px; height: 22px; }
+.navlink:hover { background: var(--row); }
+.navlink.active { background: color-mix(in srgb, var(--brand) 13%, transparent); color: var(--brand); }
+.navlink.active .ic { color: var(--brand); }
+.side-foot { margin-top: auto; padding: 12px; color: var(--muted); font-size: 0.8rem; }
+
+@media (min-width: 960px) {
+  .shell { display: flex; align-items: stretch; max-width: 1180px; margin: 0 auto; min-height: 100dvh; }
+  .sidebar {
+    display: flex; flex-direction: column; gap: 4px;
+    width: 268px; flex-shrink: 0;
+    position: sticky; top: 0; height: 100dvh;
+    padding: 26px 16px;
+    background: var(--sheet); border-right: 1px solid var(--hairline);
+  }
+  .app { max-width: none; flex: 1; min-width: 0; margin: 0; border-radius: 0; box-shadow: none; min-height: 100dvh; }
+  /* Sidebar handles navigation, so the per-page back button is redundant. */
+  .back { display: none !important; }
+  /* Centre content to a comfortable reading measure; red headers stay full-bleed. */
+  .app .rhead,
+  .app .sheet {
+    padding-left: max(40px, calc((100% - 880px) / 2));
+    padding-right: max(40px, calc((100% - 880px) / 2));
+  }
+  .app .home svg { max-width: 520px; }
+}
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

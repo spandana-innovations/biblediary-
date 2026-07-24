@@ -29,7 +29,7 @@
 <article data-season={season}>
   <div class="rhead">
     <div class="bar">
-      <a class="circ-btn" href="{base}/" aria-label="Home">‹</a>
+      <a class="circ-btn back" href="{base}/" aria-label="Home">‹</a>
     </div>
     <div class="datepill">
       <span class="d">{pretty(day.date)}</span>
