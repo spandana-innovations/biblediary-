@@ -5,6 +5,24 @@ vars are set — exactly what a Cloudflare root domain serves (not the
 `/biblediary-/` subpath GitHub Pages forces). **Do not set `BASE_PATH`** on
 Cloudflare, or assets 404.
 
+## Option 0 — GitHub Action → Cloudflare (current setup)
+
+`.github/workflows/deploy.yml` builds the site and runs `wrangler deploy` on
+every push to `main`. This is fully automatic once two **repository secrets**
+are added (GitHub → repo **Settings → Secrets and variables → Actions → New
+repository secret**):
+
+| Secret | Where to get it |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare → **My Profile → API Tokens → Create Token → "Edit Cloudflare Workers" template** |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare dashboard → Workers & Pages → right sidebar **Account ID** |
+
+The Worker `name` in `wrangler.jsonc` is `biblediary`, so the deploy updates the
+existing Worker in place. Trigger a run by pushing to `main`, or from the
+**Actions** tab → *Deploy to Cloudflare* → **Run workflow**. This replaces the
+need for the dashboard-side Git build in Option A (leave that disconnected to
+avoid double deploys).
+
 ## Option A — Worker with static assets (`*.workers.dev`)
 
 `wrangler.jsonc` at the repo root configures an **assets-only Worker** (no
