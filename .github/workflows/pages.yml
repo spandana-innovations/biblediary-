@@ -1,0 +1,38 @@
+name: Deploy preview to GitHub Pages
+
+# Publishes the interactive UI prototype in preview/ to GitHub Pages so it can
+# be viewed at a live URL. Runs on push to the working branch or main.
+on:
+  push:
+    branches: [claude/new-session-7dcvwk, main]
+    paths:
+      - "preview/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Pages (auto-enable if needed)
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: preview
+      - id: deployment
+        uses: actions/deploy-pages@v4

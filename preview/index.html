@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="God's Word / Daily Liturgy — interactive UI prototype rebuilt from the reference design.">
+<title>God's Word — interactive UI prototype</title>
+</head>
+<body>
+<style>
+  :root {
+    --brand: #c1272d;
+    --brand-deep: #9e1b20;
+    --brand-bright: #e8433b;
+    --hdr-top: #ef625a;
+    --hdr-bottom: #c31d22;
+    --home-bg: #f9e9e8;
+    --home-shadow: rgba(150, 22, 26, 0.12);
+    --sheet: #ffffff;
+    --row: #f3f2f3;
+    --row-border: transparent;
+    --text: #1f1b1b;
+    --muted: #8b8785;
+    --heading: #c1272d;
+    --hairline: #ece9e8;
+    --page: #ece7e4;
+    --chip-txt: #ffffff;
+
+    --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --font-serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --font-script: "Snell Roundhand", "Segoe Script", "Brush Script MT", cursive;
+  }
+  :root[data-theme="dark"] {
+    --home-bg: #1b1010;
+    --home-shadow: rgba(0, 0, 0, 0.5);
+    --sheet: #170f0f;
+    --row: #251616;
+    --row-border: #2e1c1c;
+    --text: #ece4e2;
+    --muted: #9c908d;
+    --heading: #cf5d54;
+    --hairline: #2c1a1a;
+    --page: #0d0808;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --home-bg: #1b1010;
+      --home-shadow: rgba(0, 0, 0, 0.5);
+      --sheet: #170f0f;
+      --row: #251616;
+      --row-border: #2e1c1c;
+      --text: #ece4e2;
+      --muted: #9c908d;
+      --heading: #cf5d54;
+      --hairline: #2c1a1a;
+      --page: #0d0808;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background:
+      radial-gradient(120% 80% at 50% -10%, rgba(193, 39, 45, 0.14), transparent 60%),
+      var(--page);
+    color: var(--text);
+    font-family: var(--font-body);
+    display: grid;
+    place-items: center;
+    min-height: 100dvh;
+    padding: 20px 12px 40px;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  /* ---------- outer controls ---------- */
+  .controls {
+    position: fixed;
+    top: 14px; right: 14px;
+    display: flex; gap: 8px; z-index: 50;
+  }
+  .controls button {
+    font: 600 0.78rem/1 var(--font-body);
+    border: 1px solid rgba(140, 120, 118, 0.35);
+    background: var(--sheet);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 0.5rem 0.8rem;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    transition: transform 0.15s ease;
+  }
+  .controls button:hover { transform: translateY(-1px); }
+  .controls button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  /* ---------- phone frame ---------- */
+  .phone {
+    width: min(420px, 96vw);
+    height: min(880px, calc(100dvh - 60px));
+    background: var(--home-bg);
+    border-radius: 42px;
+    box-shadow:
+      0 0 0 11px #101012,
+      0 0 0 13px #26262a,
+      0 30px 70px -20px rgba(0, 0, 0, 0.55);
+    position: relative;
+    overflow: hidden;
+    transition: background 0.3s ease;
+  }
+
+  .statusbar {
+    position: absolute; top: 0; left: 0; right: 0; height: 46px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 26px; font-size: 0.86rem; font-weight: 600;
+    z-index: 20; color: var(--text); pointer-events: none;
+  }
+  .statusbar.on-red { color: #fff; }
+  .statusbar .sigs { display: flex; gap: 6px; align-items: center; }
+  .statusbar .sigs svg { display: block; }
+
+  .screen {
+    position: absolute; inset: 0;
+    display: none; flex-direction: column;
+    animation: fade 0.28s ease;
+  }
+  .screen.active { display: flex; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .scroll { overflow-y: auto; overflow-x: hidden; flex: 1; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; }
+  .scroll::-webkit-scrollbar { width: 0; }
+
+  /* ---------- red header ---------- */
+  .rhead {
+    background: linear-gradient(180deg, var(--hdr-top), var(--hdr-bottom));
+    color: #fff; position: relative; padding: 52px 20px 20px;
+    flex-shrink: 0;
+  }
+  .rhead::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(80% 120% at 85% 0%, rgba(255, 255, 255, 0.18), transparent 55%);
+    pointer-events: none;
+  }
+  .rhead .bar { display: flex; align-items: center; gap: 14px; position: relative; z-index: 2; }
+  .rhead h1 { font: 600 1.4rem/1.1 var(--font-body); margin: 0; flex: 1; letter-spacing: 0.2px; }
+  .circ-btn {
+    width: 42px; height: 42px; border-radius: 50%; border: 0;
+    background: rgba(255, 255, 255, 0.2); color: #fff;
+    display: grid; place-items: center; cursor: pointer; flex-shrink: 0;
+    transition: background 0.15s ease;
+  }
+  .circ-btn:hover { background: rgba(255, 255, 255, 0.32); }
+  .circ-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .rhead .actions { display: flex; gap: 10px; }
+  .rhead .actions .circ-btn { width: 40px; height: 40px; }
+
+  /* chips row */
+  .chips {
+    display: flex; gap: 12px; margin-top: 20px; position: relative; z-index: 2;
+    overflow-x: auto; padding-bottom: 4px;
+  }
+  .chips::-webkit-scrollbar { height: 0; }
+  .cat {
+    flex: 0 0 auto; width: 108px; height: 108px; border-radius: 20px;
+    background: rgba(255, 255, 255, 0.13); border: 1px solid rgba(255, 255, 255, 0.28);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    color: #fff; cursor: pointer; font-size: 0.82rem; text-align: center; padding: 8px;
+    transition: transform 0.15s ease;
+  }
+  .cat svg { width: 34px; height: 34px; }
+  .cat.sel {
+    background: var(--sheet); color: var(--brand);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  }
+  .cat.sel span { color: var(--text); font-weight: 600; }
+  :root[data-theme="dark"] .cat.sel { background: #0d0707; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cat.sel { background: #0d0707; } }
+  .cat:hover { transform: translateY(-2px); }
+
+  /* content sheet */
+  .sheet {
+    background: var(--sheet); border-radius: 26px 26px 0 0;
+    margin-top: -18px; position: relative; z-index: 3; flex: 1;
+    padding: 26px 22px 40px; transition: background 0.3s ease;
+  }
+  .sec-h { font: 600 1.5rem/1.2 var(--font-serif); color: var(--heading); margin: 26px 0 12px; }
+  .sec-h:first-child { margin-top: 4px; }
+  .body-txt { font-size: 1.02rem; line-height: 1.6; text-align: justify; margin: 0 0 14px; }
+  .body-txt .who { }
+
+  /* ---------- HOME / cross ---------- */
+  .home { background: var(--home-bg); }
+  .home .cross-wrap { flex: 1; display: grid; place-items: center; padding: 46px 8px 8px; }
+  .home svg { width: 100%; height: auto; max-height: 100%; }
+  .arm-label { fill: #fff; font-family: var(--font-body); font-weight: 700; text-anchor: middle; }
+  .arm-label.sub { font-weight: 600; }
+  .arc-label { fill: rgba(255, 255, 255, 0.72); font: 600 12px var(--font-body); letter-spacing: 1.5px; }
+  .logo-script { fill: var(--brand); font-family: var(--font-script); font-style: italic; text-anchor: middle; }
+  .hit { cursor: pointer; }
+  .hit:focus-visible { outline: none; }
+  .hit:hover .petal { filter: brightness(1.08); }
+
+  /* ---------- day view ---------- */
+  .datepill {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 999px; padding: 10px 12px; margin: 16px 0 18px; position: relative; z-index: 2;
+  }
+  .datepill .d { font: 600 1.15rem/1 var(--font-body); }
+  .liturgy-title { font: 600 2rem/1.05 var(--font-serif); margin: 4px 0 6px; position: relative; z-index: 2; }
+  .liturgy-sub { color: rgba(255, 255, 255, 0.86); font-size: 0.98rem; position: relative; z-index: 2; }
+  .tabs { display: flex; gap: 10px; margin-top: 18px; overflow-x: auto; position: relative; z-index: 2; padding-bottom: 2px; }
+  .tabs::-webkit-scrollbar { height: 0; }
+  .tab {
+    flex: 0 0 auto; border: 1px solid rgba(255, 255, 255, 0.5); background: transparent;
+    color: #fff; border-radius: 999px; padding: 0.62rem 1.2rem; font: 600 0.95rem var(--font-body);
+    cursor: pointer; white-space: nowrap; transition: all 0.15s ease;
+  }
+  .tab.sel { background: var(--sheet); color: var(--text); border-color: transparent; }
+  .day-ref-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+  .day-ref { font: 600 1.35rem/1.2 var(--font-body); }
+  .mini-actions { display: flex; gap: 10px; }
+  .mini-btn {
+    width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--row);
+    color: var(--text); display: grid; place-items: center; cursor: pointer;
+  }
+  .mini-btn:hover { background: var(--hairline); }
+  .dropcap::first-letter {
+    font-family: var(--font-serif); font-size: 3.4rem; line-height: 0.8; float: left;
+    padding: 4px 8px 0 0; color: var(--text); font-weight: 600;
+  }
+  .celebrant { color: var(--brand); }
+  .rubric { color: #b026b0; font-style: italic; }
+  :root[data-theme="dark"] .rubric { color: #d98fd9; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .rubric { color: #d98fd9; } }
+  .resp { font-weight: 700; }
+  .edtoggle { display: inline-flex; border: 1px solid rgba(255,255,255,0.4); border-radius: 999px; overflow: hidden; position: relative; z-index: 2; margin-top: 4px; }
+  .edtoggle button { border: 0; background: transparent; color: rgba(255,255,255,0.8); font: 600 0.8rem var(--font-body); padding: 0.4rem 0.9rem; cursor: pointer; }
+  .edtoggle button[aria-pressed="true"] { background: #fff; color: var(--brand); }
+
+  /* ---------- list rows (hymns) ---------- */
+  .list { display: flex; flex-direction: column; gap: 12px; }
+  .lrow {
+    display: flex; align-items: center; gap: 14px; background: var(--row);
+    border: 1px solid var(--row-border); border-radius: 16px; padding: 16px;
+  }
+  .lrow .ic { color: var(--brand); flex-shrink: 0; }
+  .lrow .meta { flex: 1; min-width: 0; }
+  .lrow .t { font-weight: 600; font-size: 1.02rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lrow .s { color: var(--muted); font-size: 0.86rem; margin-top: 2px; }
+  .play {
+    width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--brand);
+    color: var(--brand); background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0;
+  }
+  .play:hover { background: var(--brand); color: #fff; }
+
+  /* accordion (prayers) */
+  .acc { display: flex; flex-direction: column; gap: 12px; }
+  .arow { background: var(--row); border: 1px solid var(--row-border); border-radius: 16px; overflow: hidden; }
+  .arow > button {
+    width: 100%; display: flex; align-items: center; justify-content: space-between;
+    background: transparent; border: 0; color: var(--text); font: 600 1.08rem var(--font-body);
+    padding: 18px 18px; cursor: pointer; text-align: left;
+  }
+  .arow .chev { transition: transform 0.2s ease; color: var(--muted); }
+  .arow.open .chev { transform: rotate(180deg); }
+  .arow .panel { max-height: 0; overflow: hidden; transition: max-height 0.28s ease; }
+  .arow.open .panel { max-height: 320px; }
+  .arow .panel p { margin: 0; padding: 0 18px 18px; color: var(--text); line-height: 1.6; }
+
+  /* homily hero */
+  .hero {
+    margin: 16px 0 0; border-radius: 22px; padding: 26px; text-align: center; color: #fff;
+    background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .hero h2 { font: 600 1.7rem/1 var(--font-body); margin: 0; }
+  .hero .date-chip { border: 1px solid rgba(255,255,255,0.4); border-radius: 999px; padding: 6px 14px; font-size: 0.86rem; }
+  .refl-badge { display: inline-block; background: var(--brand); color: #fff; border-radius: 999px; padding: 8px 18px; font-weight: 600; font-size: 0.92rem; margin-bottom: 14px; }
+  .refl-author { font-style: italic; color: var(--muted); margin-top: 8px; }
+  .refl { border-bottom: 1px solid var(--hairline); padding-bottom: 22px; margin-bottom: 22px; }
+  .refl:last-child { border: 0; }
+  .refl-top { display: flex; align-items: center; justify-content: space-between; }
+
+  /* more apps */
+  .approw { display: flex; align-items: center; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--hairline); }
+  .approw .badge { width: 62px; height: 62px; border-radius: 16px; display: grid; place-items: center; font-weight: 800; color: #fff; flex-shrink: 0; font-family: var(--font-serif); }
+  .approw .meta { flex: 1; }
+  .approw .t { font-weight: 600; font-size: 1.2rem; }
+  .approw .s { color: var(--muted); font-size: 0.9rem; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="controls">
+  <button id="edBtn" title="Switch edition">🇮🇳 God's Word</button>
+  <button id="themeBtn" title="Toggle theme">◐ Theme</button>
+  <button id="homeBtn" title="Home">✝ Home</button>
+</div>
+
+<div class="phone" id="phone">
+  <div class="statusbar" id="statusbar">
+    <span>12:05</span>
+    <span class="sigs">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+      <svg width="17" height="12" viewBox="0 0 17 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 4.2a11 11 0 0 1 15 0M3.6 6.9a7.2 7.2 0 0 1 9.8 0M6.2 9.4a3.4 3.4 0 0 1 4.6 0"/></svg>
+      <svg width="26" height="13" viewBox="0 0 26 13" fill="none"><rect x="0.6" y="0.6" width="22" height="11.8" rx="3" stroke="currentColor" stroke-width="1.3"/><rect x="2.4" y="2.4" width="18" height="8.2" rx="1.6" fill="currentColor"/><rect x="24" y="4" width="2" height="5" rx="1" fill="currentColor"/></svg>
+    </span>
+  </div>
+
+  <!-- ===================== HOME ===================== -->
+  <section class="screen home active" id="s-home">
+    <div class="cross-wrap">
+      <svg viewBox="0 0 400 780" role="img" aria-label="God's Word home">
+        <defs>
+          <linearGradient id="petalG" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#d1332f"/>
+            <stop offset="1" stop-color="#a5161b"/>
+          </linearGradient>
+          <path id="arcMore" d="M 108 372 A 96 96 0 0 0 176 452" fill="none"/>
+          <path id="arcAbout" d="M 224 452 A 96 96 0 0 0 292 372" fill="none"/>
+        </defs>
+
+        <!-- offset shadow -->
+        <g transform="translate(16,20)" opacity="0.16">
+          <path d="M200,318 Q128,190 200,66 Q272,190 200,318 Z" fill="#7a1114"/>
+          <path d="M200,318 Q128,540 200,720 Q272,540 200,318 Z" fill="#7a1114"/>
+          <path d="M200,318 Q118,244 34,318 Q118,392 200,318 Z" fill="#7a1114"/>
+          <path d="M200,318 Q282,244 366,318 Q282,392 200,318 Z" fill="#7a1114"/>
+        </g>
+
+        <!-- arms -->
+        <g class="hit" role="button" tabindex="0" data-go="s-order" aria-label="Order of the Mass">
+          <path class="petal" d="M200,318 Q128,190 200,66 Q272,190 200,318 Z" fill="url(#petalG)"/>
+          <text class="arm-label" x="200" y="150" font-size="26">ORDER</text>
+          <text class="arm-label sub" x="200" y="178" font-size="16">OF THE</text>
+          <text class="arm-label sub" x="200" y="200" font-size="16">MASS</text>
+        </g>
+        <g class="hit" role="button" tabindex="0" data-go="s-homily" aria-label="Homily Tips">
+          <path class="petal" d="M200,318 Q128,540 200,720 Q272,540 200,318 Z" fill="url(#petalG)"/>
+          <text class="arm-label" x="200" y="606" font-size="26">HOMILY</text>
+          <text class="arm-label sub" x="200" y="634" font-size="16">TIPS</text>
+        </g>
+        <g class="hit" role="button" tabindex="0" data-go="s-hymns" aria-label="Popular Hymns">
+          <path class="petal" d="M200,318 Q118,244 34,318 Q118,392 200,318 Z" fill="url(#petalG)"/>
+          <text class="arm-label sub" x="78" y="310" font-size="13">POPULAR</text>
+          <text class="arm-label" x="78" y="337" font-size="18">HYMNS</text>
+        </g>
+        <g class="hit" role="button" tabindex="0" data-go="s-prayers" aria-label="Prayer Collection">
+          <path class="petal" d="M200,318 Q282,244 366,318 Q282,392 200,318 Z" fill="url(#petalG)"/>
+          <text class="arm-label" x="322" y="310" font-size="18">PRAYER</text>
+          <text class="arm-label sub" x="322" y="337" font-size="11">COLLECTION</text>
+        </g>
+
+        <!-- dark disc behind center -->
+        <circle cx="200" cy="352" r="96" fill="#2b2b2f"/>
+        <g class="hit" role="button" tabindex="0" data-go="s-more" aria-label="More Apps">
+          <text class="arc-label"><textPath href="#arcMore" startOffset="6%">MORE APPS</textPath></text>
+        </g>
+        <g class="hit" role="button" tabindex="0" data-go="s-about" aria-label="About Us">
+          <text class="arc-label"><textPath href="#arcAbout" startOffset="6%">ABOUT US</textPath></text>
+        </g>
+
+        <!-- center disc = today's readings -->
+        <g class="hit" role="button" tabindex="0" data-go="s-day" aria-label="Today's readings">
+          <circle cx="200" cy="318" r="83" fill="#ffffff"/>
+          <text class="logo-script" x="200" y="309" font-size="41">God's</text>
+          <text class="logo-script" x="200" y="351" font-size="41">Word</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ===================== DAY (readings) ===================== -->
+  <section class="screen" id="s-day">
+    <div class="scroll">
+      <div class="rhead">
+        <div class="bar">
+          <button class="circ-btn" data-go="s-home" aria-label="Back">‹</button>
+          <div class="edtoggle" id="edInline">
+            <button data-ed="in" aria-pressed="true">India</button>
+            <button data-ed="ie" aria-pressed="false">Ireland</button>
+          </div>
+        </div>
+        <div class="datepill">
+          <button class="circ-btn" style="width:34px;height:34px" aria-label="Previous day">‹</button>
+          <span class="d" id="dayDate">Sunday, 5 April 2026</span>
+          <button class="circ-btn" style="width:34px;height:34px" aria-label="Next day">›</button>
+        </div>
+        <div class="liturgy-title">Easter Sunday</div>
+        <div class="liturgy-sub">The Resurrection of the Lord · <span id="dayPsalter">Psalter Week I</span> · <span id="dayTr">ESV-CE</span></div>
+        <div class="tabs" id="dayTabs"></div>
+      </div>
+      <div class="sheet">
+        <div class="day-ref-row">
+          <div class="day-ref" id="dayRef">Acts 10:34a, 37-43</div>
+          <div class="mini-actions">
+            <button class="mini-btn" aria-label="Full screen" title="Full screen">⤢</button>
+            <button class="mini-btn" aria-label="Text size" title="Text size" style="font-weight:700">T</button>
+            <button class="mini-btn" aria-label="Share" title="Share">↗</button>
+          </div>
+        </div>
+        <p class="body-txt dropcap" id="dayBody"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ORDER OF MASS ===================== -->
+  <section class="screen" id="s-order">
+    <div class="scroll">
+      <div class="rhead">
+        <div class="bar">
+          <button class="circ-btn" data-go="s-home" aria-label="Back">‹</button>
+          <h1>Order of Mass</h1>
+          <div class="actions">
+            <button class="circ-btn" aria-label="Text size" style="font-weight:700">T</button>
+            <button class="circ-btn" aria-label="Share">↗</button>
+          </div>
+        </div>
+        <div class="chips" id="orderChips"></div>
+      </div>
+      <div class="sheet">
+        <h3 class="sec-h">The Introductory Rites</h3>
+        <p class="body-txt">Celebrant: In the name of the Father, and of the Son, and of the Holy Spirit.<br>All: Amen.</p>
+        <p class="body-txt">Celebrant: The grace of our Lord Jesus Christ, and the love of God, and the communion of the Holy Spirit be with you all.<br>All: And with your spirit.</p>
+        <h3 class="sec-h">Penitential Rite</h3>
+        <p class="body-txt">Brethren (brothers and sisters), let us acknowledge our sins, and so prepare ourselves to celebrate the sacred mysteries.</p>
+        <p class="body-txt">(a brief silence)</p>
+        <p class="body-txt">All: I confess to almighty God and to you, my brothers and sisters, that I have greatly sinned, in my thoughts and in my words, in what I have done and in what I have failed to do, through my fault, through my fault, through my most grievous fault; therefore I ask blessed Mary ever-Virgin, all the Angels and Saints, and you, my brothers and sisters, to pray for me to the Lord our God.</p>
+        <p class="body-txt">Celebrant: May almighty God have mercy on us, forgive us our sins, and bring us to everlasting life. All: Amen.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== HYMNS ===================== -->
+  <section class="screen" id="s-hymns">
+    <div class="scroll">
+      <div class="rhead">
+        <div class="bar">
+          <button class="circ-btn" data-go="s-home" aria-label="Back">‹</button>
+          <h1>Popular Hymns</h1>
+          <div class="actions">
+            <button class="circ-btn" aria-label="Text size" style="font-weight:700">T</button>
+            <button class="circ-btn" aria-label="Share">↗</button>
+          </div>
+        </div>
+        <div class="chips" id="hymnChips"></div>
+      </div>
+      <div class="sheet">
+        <div class="list" id="hymnList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PRAYERS ===================== -->
+  <section class="screen" id="s-prayers">
+    <div class="scroll">
+      <div class="rhead">
+        <div class="bar">
+          <button class="circ-btn" data-go="s-home" aria-label="Back">‹</button>
+          <h1>Prayer Collection</h1>
+          <div class="actions">
+            <button class="circ-btn" aria-label="Text size" style="font-weight:700">T</button>
+            <button class="circ-btn" aria-label="Share">↗</button>
+          </div>
+        </div>
+        <div class="chips" id="prayerChips"></div>
+      </div>
+      <div class="sheet">
+        <div class="acc" id="prayerAcc"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== HOMILY ===================== -->
+  <section class="screen" id="s-homily">
+    <div class="scroll">
+      <div class="rhead">
+        <div class="bar">
+          <button class="circ-btn" data-go="s-home" aria-label="Back">‹</button>
+          <h1>Homily Tips</h1>
+          <div class="actions">
+            <button class="circ-btn" aria-label="Smaller" style="font-size:0.8rem">A−</button>
+            <button class="circ-btn" aria-label="Larger">A＋</button>
+            <button class="circ-btn" aria-label="Share">↗</button>
+          </div>
+        </div>
+        <div class="hero">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l1 2h-2zM12 5c-1.5 0-3 1-3 3v2H6v11h12V10h-3V8c0-2-1.5-3-3-3zm-1 3a1 1 0 1 1 2 0v2h-2z"/></svg>
+          <h2>Today's Homily Tip</h2>
+          <span class="date-chip">📅 February 23, Monday</span>
+        </div>
+      </div>
+      <div class="sheet">
+        <div class="refl">
+          <div class="refl-top">
+            <div class="day-ref">Matthew 25: 31-46</div>
+            <div class="mini-actions">
+              <button class="mini-btn" aria-label="Share">↗</button>
+              <button class="mini-btn" aria-label="Play">▶</button>
+            </div>
+          </div>
+          <span class="refl-badge">Reflection: 1</span>
+          <p class="body-txt">The purpose of today's Gospel passage is to tell us what we must do in order to be saved; how we should live while awaiting the final and glorious coming of the Lord, and how we should be actively and concretely helping those who are in need, like feeding the hungry, clothing the naked etc. St Mother Teresa of Kolkata made this text the basis of her world mission to serve the poorest of the poor. Whatever we do on account of brotherly love is for us the key to heaven.</p>
+          <p class="refl-author">Fr (Dr) George Kaitholil, SSP</p>
+        </div>
+        <div class="refl">
+          <div class="refl-top">
+            <div class="day-ref">Reflection: 2</div>
+            <div class="mini-actions">
+              <button class="mini-btn" aria-label="Share">↗</button>
+              <button class="mini-btn" aria-label="Play">▶</button>
+            </div>
+          </div>
+          <p class="body-txt">The passage emphasizes the importance of living a life of service and of the gravity of neglecting the needy with whom Jesus identifies himself. Even for the smallest good deed, we shall be rewarded.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MORE APPS ===================== -->
+  <section class="screen" id="s-more">
+    <div class="scroll">
+      <div class="rhead">
+        <div class="bar">
+          <button class="circ-btn" data-go="s-home" aria-label="Back">‹</button>
+          <h1>More Apps</h1>
+          <div class="actions">
+            <button class="circ-btn" aria-label="Text size" style="font-weight:700">T</button>
+            <button class="circ-btn" aria-label="Share">↗</button>
+          </div>
+        </div>
+      </div>
+      <div class="sheet">
+        <div class="approw">
+          <div class="badge" style="background:#f4dede;color:var(--brand)">SP</div>
+          <div class="meta"><div class="t">St Paul's</div><div class="s">Website</div></div>
+          <button class="mini-btn" aria-label="Open">↗</button>
+        </div>
+        <div class="approw">
+          <div class="badge" style="background:linear-gradient(135deg,#c1272d,#7a0f13)">✝</div>
+          <div class="meta"><div class="t">New Community Bible</div><div class="s">Available on: Android | iOS</div></div>
+          <button class="mini-btn" aria-label="Download">⭳</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ABOUT ===================== -->
+  <section class="screen" id="s-about">
+    <div class="scroll">
+      <div class="rhead">
+        <div class="bar">
+          <button class="circ-btn" data-go="s-home" aria-label="Back">‹</button>
+          <h1>About us</h1>
+        </div>
+      </div>
+      <div class="sheet">
+        <h3 class="sec-h">God's Word</h3>
+        <p class="body-txt">God's Word App is an initiative of ST PAULS Biblical Centre (SPBC), to assist you to pray on the go. Its distinct features like complete liturgical readings of the day, with audio text, inspiring reflections and daily intercessions will add to the quality of your personal prayer life.</p>
+        <p class="body-txt">Besides these, there are additional homily tips for each day, some popular hymns as well as a collection of popular prayers, novenas and litanies which will be handy for your personal as well as family use.</p>
+        <p class="body-txt">Contact us: biblicalcentre@stpauls.in</p>
+        <p class="body-txt">Fr Joe Eruppakkatt, SSP — Director (SPBC)</p>
+        <h3 class="sec-h">About Us</h3>
+        <p class="body-txt">The Society of Saint Paul was born with the specific charism to spread the Christian message and values through the means of communication, from the Apostolate of the Press to using all the latest and fastest means of communication today.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // ------- icons -------
+  const icons = {
+    angel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="6" r="2"/><path d="M12 8c-2 0-3 1.5-3 3.5V16h6v-4.5C15 9.5 14 8 12 8z"/><path d="M9 11C6 11 4 13 3 15c3 0 5-1 6-2M15 11c3 0 5 2 6 4-3 0-5-1-6-2"/></svg>',
+    note: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 17V5l10-2v12"/><circle cx="6" cy="17" r="3"/><circle cx="16" cy="15" r="3"/></svg>',
+    mary: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 3c-3 0-5 2-5 5 0 4 5 13 5 13s5-9 5-13c0-3-2-5-5-5z"/><circle cx="12" cy="8" r="2"/></svg>',
+    notes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="18" cy="6" r="2" fill="currentColor"/><circle cx="20" cy="15" r="2" fill="currentColor"/></svg>',
+    church: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1 2h-2zM11 5v2H9l3 2 3-2h-2V5zM6 11l6-4 6 4v9H6zM10 14h4v6h-4z"/></svg>',
+    beads: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="5" r="1.5"/><circle cx="7" cy="8" r="1.5"/><circle cx="17" cy="8" r="1.5"/><circle cx="6" cy="14" r="1.5"/><circle cx="18" cy="14" r="1.5"/><path d="M12 18v3M10.5 21h3"/></svg>'
+  };
+
+  // ------- data: editions (only the daily lectionary differs) -------
+  const editions = {
+    in: {
+      label: "🇮🇳 God's Word", translation: "ESV-CE", psalter: "Psalter Week I",
+      sections: [
+        { tab: "1st Reading", ref: "Acts 10:34a, 37-43", body: `In those days: Peter opened his mouth and said: "You yourselves know what happened throughout all Judea, beginning from Galilee after the baptism that John proclaimed."` },
+        { tab: "Psalm", ref: "Psalm 118:1-2, 16-17, 22-23", body: `This is the day that the Lord has made; let us rejoice and be glad in it. Oh give thanks to the Lord, for he is good; for his steadfast love endures for ever.` },
+        { tab: "2nd Reading", ref: "Colossians 3:1-4", body: `Brothers and sisters: If then you have been raised with Christ, seek the things that are above, where Christ is, seated at the right hand of God.` },
+        { tab: "Acclamation", ref: "1 Corinthians 5:7b-8a", body: `Christ, our paschal lamb, has been sacrificed; let us therefore celebrate the festival.` },
+        { tab: "Gospel", ref: "John 20:1-9", body: `Now on the first day of the week Mary Magdalene came to the tomb early, while it was still dark, and saw that the stone had been taken away from the tomb.` },
+        { tab: "Reflection", ref: "Reflection", body: `The empty tomb is not the end of the story but its beginning. What do we carry back from the garden this morning?` },
+        { tab: "Saint", ref: "Saint of the Day", body: `The Solemnity of the Resurrection displaces the ordinary sanctoral calendar today.` },
+        { tab: "Intercessions", ref: "Intercessions", html: `<span class="celebrant">Let us pray to the risen Lord.</span><br><span class="rubric">A brief silence is kept after each intention.</span><br><span class="resp">Lord, hear our prayer.</span>` }
+      ]
+    },
+    ie: {
+      label: "🇮🇪 Daily Liturgy", translation: "Jerusalem Bible", psalter: "Psalter Week I",
+      sections: [
+        { tab: "1st Reading", ref: "Acts 10:34, 37-43", body: `Peter addressed Cornelius and his household: "You must have heard about the recent happenings in Judaea; about Jesus of Nazareth and how he began in Galilee, after John had been preaching baptism."` },
+        { tab: "Psalm", ref: "Psalm 117:1-2, 16-17, 22-23", body: `This day was made by the Lord; we rejoice and are glad. Give thanks to the Lord for he is good, for his love has no end.` },
+        { tab: "2nd Reading", ref: "Colossians 3:1-4", body: `Since you have been brought back to true life with Christ, you must look for the things that are in heaven, where Christ is, sitting at God's right hand.` },
+        { tab: "Acclamation", ref: "1 Corinthians 5:7-8", body: `Christ, our passover, has been sacrificed; let us celebrate the feast, then, in the Lord.` },
+        { tab: "Gospel", ref: "John 20:1-9", body: `It was very early on the first day of the week and still dark, when Mary of Magdala came to the tomb. She saw that the stone had been moved away from the tomb.` },
+        { tab: "Reflection", ref: "Reflection", body: `The empty tomb is not the end of the story but its beginning. What do we carry back from the garden this morning?` },
+        { tab: "Saint", ref: "Saint of the Day", body: `The Solemnity of the Resurrection displaces the ordinary sanctoral calendar today.` },
+        { tab: "Intercessions", ref: "Intercessions", html: `<span class="celebrant">Let us pray to the risen Lord.</span><br><span class="rubric">A brief silence is kept after each intention.</span><br><span class="resp">Lord, hear our prayer.</span>` }
+      ]
+    }
+  };
+
+  let edition = "in";
+  let secIdx = 0;
+
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+  // ------- router -------
+  const redScreens = new Set(["s-day", "s-order", "s-hymns", "s-prayers", "s-homily", "s-more", "s-about"]);
+  function go(id) {
+    $$(".screen").forEach((s) => s.classList.toggle("active", s.id === id));
+    $("#statusbar").classList.toggle("on-red", redScreens.has(id));
+    const sc = $("#" + id + " .scroll");
+    if (sc) sc.scrollTop = 0;
+  }
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-go]");
+    if (t) { go(t.dataset.go); }
+  });
+  document.addEventListener("keydown", (e) => {
+    if ((e.key === "Enter" || e.key === " ") && e.target.dataset && e.target.dataset.go) {
+      e.preventDefault(); go(e.target.dataset.go);
+    }
+  });
+
+  // ------- day view render -------
+  function renderDay() {
+    const ed = editions[edition];
+    $("#dayTr").textContent = ed.translation;
+    $("#dayPsalter").textContent = ed.psalter;
+    const tabs = $("#dayTabs");
+    tabs.innerHTML = ed.sections.map((s, i) =>
+      `<button class="tab ${i === secIdx ? "sel" : ""}" data-sec="${i}">${s.tab}</button>`).join("");
+    const sec = ed.sections[secIdx];
+    $("#dayRef").textContent = sec.ref;
+    const body = $("#dayBody");
+    if (sec.html) { body.classList.remove("dropcap"); body.innerHTML = sec.html; }
+    else { body.classList.add("dropcap"); body.textContent = sec.body; }
+  }
+  $("#dayTabs").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-sec]");
+    if (!b) return;
+    secIdx = +b.dataset.sec; renderDay();
+  });
+  $("#edInline").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-ed]");
+    if (!b) return;
+    edition = b.dataset.ed;
+    $$("#edInline button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.ed === edition)));
+    syncEdition(); renderDay();
+  });
+
+  // ------- category chips -------
+  function chip(icon, label, sel) {
+    return `<div class="cat ${sel ? "sel" : ""}"><span class="ic">${icon}</span><span>${label}</span></div>`;
+  }
+  function wireChips(container) {
+    container.addEventListener("click", (e) => {
+      const c = e.target.closest(".cat");
+      if (!c) return;
+      $$(".cat", container).forEach((x) => x.classList.remove("sel"));
+      c.classList.add("sel");
+    });
+  }
+  $("#orderChips").innerHTML = ["Eucharistic Prayer I", "Eucharistic Prayer II", "Eucharistic Prayer III", "Eucharistic Prayer IV"]
+    .map((l, i) => chip(icons.church, "Mass with<br>" + l, i === 0)).join("");
+  $("#hymnChips").innerHTML =
+    chip(icons.angel, "Holy Mass", false) + chip(icons.note, "Instru. Music", true) +
+    chip(icons.mary, "Mary &amp; Jose.", false) + chip(icons.notes, "Others", false);
+  $("#prayerChips").innerHTML =
+    chip(icons.beads, "Common", true) + chip(icons.beads, "Holy Rosary", false) +
+    chip(icons.mary, "Marian", false) + chip(icons.notes, "Litanies", false);
+  [$("#orderChips"), $("#hymnChips"), $("#prayerChips")].forEach(wireChips);
+
+  // ------- hymn list (cleaned titles — an improvement over stored filenames) -------
+  const hymns = [
+    "I Will Turn My Steps", "Amazing Grace", "Ave Maria", "How Great Thou Art",
+    "Be Thou My Vision", "Panis Angelicus", "Here I Am, Lord"
+  ];
+  $("#hymnList").innerHTML = hymns.map((t) => `
+    <div class="lrow">
+      <span class="ic">${icons.note}</span>
+      <div class="meta"><div class="t">${t}</div><div class="s">by St Paul's</div></div>
+      <button class="play" aria-label="Play ${t}">▶</button>
+    </div>`).join("");
+
+  // ------- prayers accordion -------
+  const prayers = [
+    { t: "The Sign of the Cross", b: "In the name of the Father, and of the Son, and of the Holy Spirit. Amen." },
+    { t: "Our Father", b: "Our Father, who art in heaven, hallowed be thy name; thy kingdom come; thy will be done on earth as it is in heaven. Give us this day our daily bread; and forgive us our trespasses as we forgive those who trespass against us; and lead us not into temptation, but deliver us from evil. Amen." },
+    { t: "Hail Mary", b: "Hail Mary, full of grace, the Lord is with thee. Blessed art thou amongst women, and blessed is the fruit of thy womb, Jesus. Holy Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen." },
+    { t: "Glory Be", b: "Glory be to the Father, and to the Son, and to the Holy Spirit. As it was in the beginning, is now, and ever shall be, world without end. Amen." },
+    { t: "The Angelus", b: "The Angel of the Lord declared unto Mary, and she conceived of the Holy Spirit…" },
+    { t: "The Queen of Heaven", b: "Queen of Heaven, rejoice, alleluia. For he whom you did merit to bear, alleluia, has risen as he said, alleluia." }
+  ];
+  $("#prayerAcc").innerHTML = prayers.map((p, i) => `
+    <div class="arow ${i === 1 ? "open" : ""}">
+      <button aria-expanded="${i === 1}"><span>${p.t}</span><span class="chev">⌄</span></button>
+      <div class="panel"><p>${p.b}</p></div>
+    </div>`).join("");
+  $("#prayerAcc").addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const row = btn.parentElement;
+    const open = row.classList.toggle("open");
+    btn.setAttribute("aria-expanded", String(open));
+  });
+
+  // ------- edition + theme controls -------
+  function syncEdition() {
+    $("#edBtn").textContent = editions[edition].label;
+    $$("#edInline button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.ed === edition)));
+  }
+  $("#edBtn").addEventListener("click", () => {
+    edition = edition === "in" ? "ie" : "in";
+    syncEdition(); renderDay();
+  });
+
+  const root = document.documentElement;
+  function currentDark() {
+    const t = root.getAttribute("data-theme");
+    if (t) return t === "dark";
+    return matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+  $("#themeBtn").addEventListener("click", () => {
+    root.setAttribute("data-theme", currentDark() ? "light" : "dark");
+  });
+
+  // init
+  renderDay();
+  syncEdition();
+</script>
+
+</body>
+</html>
