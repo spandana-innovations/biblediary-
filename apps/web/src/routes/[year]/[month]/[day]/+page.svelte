@@ -5,7 +5,6 @@
   import { renderBody } from "$lib/api";
   import { seasonToken, seasonLabel } from "$lib/liturgical";
   import { icons } from "$lib/icons";
-  import { openCard } from "$lib/verseCard.svelte";
   import { settings } from "$lib/settings.svelte";
 
   let { data } = $props();
@@ -163,11 +162,12 @@
     </div>
   </header>
 
-  <!-- Date selector sits below the intro block. -->
+  <!-- Date selector sits below the intro block. Arrows only, so it stays on
+       one line on narrow screens; the date itself opens the picker. -->
   <nav class="datebar" aria-label="Choose a day">
     {#if prevHref}
-      <a href={prevHref} aria-label="Previous day">{@html icons.prev}<span>Prev</span></a>
-    {:else}<span class="off">{@html icons.prev}<span>Prev</span></span>{/if}
+      <a class="arrow" href={prevHref} aria-label="Previous day">{@html icons.prev}</a>
+    {:else}<span class="arrow off" aria-hidden="true">{@html icons.prev}</span>{/if}
 
     <label class="picker">
       {@html icons.calendar}
@@ -176,8 +176,8 @@
     </label>
 
     {#if nextHref}
-      <a href={nextHref} aria-label="Next day"><span>Next</span>{@html icons.next}</a>
-    {:else}<span class="off"><span>Next</span>{@html icons.next}</span>{/if}
+      <a class="arrow" href={nextHref} aria-label="Next day">{@html icons.next}</a>
+    {:else}<span class="arrow off" aria-hidden="true">{@html icons.next}</span>{/if}
   </nav>
 
   <div class="day">
@@ -190,14 +190,11 @@
               <p class="label">{#if s.key === "gospel"}<span class="xmark">✠ </span>{/if}{s.title}</p>
               {#if s.ref}<p class="ref">{s.ref}</p>{/if}
             </div>
+            <!-- Sharing is disabled for now; read-aloud stays. -->
             <div class="sec-act">
               <button aria-label={speaking === s.key ? "Stop" : "Listen"} onclick={() => speak(s)}>
                 {@html speaking === s.key ? icons.stop : icons.sound}
               </button>
-              <button
-                aria-label="Share as image"
-                onclick={() => openCard({ title: s.title, ref: s.ref ?? s.title, text: plain(s.body), season, dateLine: parts(day.date).line })}
-              >{@html icons.share}</button>
             </div>
           </div>
           <div class="body" class:dropcap={hasDrop(s)} class:homily={s.key === "homily"}>{@html renderBody(s.body)}</div>
@@ -254,16 +251,19 @@
     display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
     max-width: 52rem; margin: 0 auto; padding: 18px clamp(20px, 5vw, 60px) 0;
   }
-  .datebar a, .datebar .off, .picker {
-    display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 16px;
-    border: 1px solid var(--hairline); border-radius: 999px; color: var(--season-ink);
-    font-family: var(--font-ui); font-size: 0.74rem; text-transform: uppercase;
-    letter-spacing: 0.08em; font-weight: 600;
+  .datebar .arrow, .picker {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 44px; border: 1px solid var(--hairline); border-radius: 999px;
+    color: var(--season-ink); font-family: var(--font-ui); font-weight: 600;
   }
-  .datebar .off { opacity: 0.35; }
-  .datebar :global(svg) { width: 17px; height: 17px; }
-  .picker { position: relative; cursor: pointer; color: var(--ink); text-transform: none; letter-spacing: 0.01em; font-size: 0.85rem; }
-  .picker .pl { white-space: nowrap; }
+  .datebar .arrow { width: 44px; flex-shrink: 0; }
+  .datebar .off { opacity: 0.3; }
+  .datebar :global(svg) { width: 18px; height: 18px; }
+  .picker {
+    position: relative; cursor: pointer; color: var(--ink);
+    padding: 0 18px; font-size: 0.88rem; letter-spacing: 0.01em; min-width: 0;
+  }
+  .picker .pl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .picker input {
     position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer;
     border: 0; padding: 0;
@@ -328,6 +328,12 @@
       gap: 18px; overflow-x: auto; padding: 12px 0 14px; margin-bottom: 8px;
       background: color-mix(in srgb, var(--paper) 90%, var(--season-wash));
       border-bottom: 1px solid var(--hairline);
+      /* Keep the strip clear of the floating controls in the top-right, and
+         let it scroll fully rather than disappearing beneath them. */
+      padding-right: 152px;
+      scroll-padding-right: 152px;
+      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 150px), transparent calc(100% - 30px));
+      mask-image: linear-gradient(to right, #000 calc(100% - 150px), transparent calc(100% - 30px));
     }
     .day-rail button { border-left: 0; border-bottom: 2px solid transparent; white-space: nowrap; padding: 4px 0; }
     .day-rail button.on { border-left: 0; border-bottom-color: var(--season-ink); }

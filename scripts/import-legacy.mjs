@@ -219,6 +219,28 @@ function clean(html) {
   s = decode(s);
   // Collapse the artefacts of nested markup.
   s = s.replace(/\*\*\s*\*\*/g, "").replace(/\*\s*\*/g, "");
+
+  // Balance emphasis per paragraph. The source has <em>/<strong> spans that
+  // open in one block and close in another, which would otherwise leave stray
+  // asterisks sitting in the rendered prose.
+  s = s
+    .split("\n\n")
+    .map((para) => {
+      let p = para;
+      if (((p.match(/\*\*/g) ?? []).length) % 2) p = p.replace(/\*\*/g, "");
+      const singles = (p.replace(/\*\*/g, "").match(/\*/g) ?? []).length;
+      if (singles % 2) p = p.replace(/(^|[^*])\*(?!\*)/g, "$1");
+
+      // Markers must hug their text: Markdown will not close emphasis when a
+      // space sits before the closing asterisk, and the source is full of
+      // "*text. *" from spans that swallowed trailing whitespace.
+      p = p.replace(/\*\*([\s\S]*?)\*\*/g, (_m, i) => (i.trim() ? `**${i.trim()}**` : ""));
+      p = p.replace(/(^|[^*])\*(?!\*)([\s\S]*?)(?<!\*)\*(?!\*)/g, (_m, pre, i) =>
+        i.trim() ? `${pre}*${i.trim()}*` : pre
+      );
+      return p;
+    })
+    .join("\n\n");
   s = s.replace(/[ \t]+/g, " ").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n");
   return s.trim();
 }

@@ -147,65 +147,76 @@ a { color: inherit; text-decoration: none; }
   .rail { position: sticky; top: 0; height: 100dvh; border-right: 1px solid var(--hairline); }
 }
 
-/* mobile bottom tab bar — Mass sits centre, double width, as a cross pill */
+/* Mobile navigation: a floating rounded bar that clears the screen edges,
+   with the Mass mark rising out of its centre. */
 .tabbar {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
-  display: grid; grid-template-columns: 1fr 1fr 2fr 1fr 1fr; align-items: end;
-  background: color-mix(in srgb, var(--paper) 88%, var(--season-wash));
-  border-top: 1px solid var(--hairline); backdrop-filter: blur(8px);
-  padding-bottom: env(safe-area-inset-bottom);
+  position: fixed; z-index: 40;
+  left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right));
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  display: grid; grid-template-columns: 1fr 1fr 1.3fr 1fr 1fr; align-items: end;
+  background: color-mix(in srgb, var(--paper) 92%, var(--season-wash));
+  border: 1px solid var(--hairline); border-radius: 26px;
+  box-shadow: 0 10px 30px -10px color-mix(in srgb, var(--season-deep) 40%, transparent);
+  backdrop-filter: blur(14px);
+  padding: 0 4px;
 }
 .tabbar a {
-  display: grid; justify-items: center; gap: 3px; padding: 9px 0 8px;
-  font-family: var(--font-ui); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em;
-  color: var(--muted);
+  display: grid; justify-items: center; gap: 3px; padding: 10px 0 9px;
+  font-family: var(--font-ui); font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--muted); border-radius: 20px;
 }
-.tabbar a .ic svg { width: 21px; height: 21px; }
+.tabbar a .ic svg { width: 20px; height: 20px; }
 .tabbar a.active { color: var(--season-ink); }
 
 /* The Mass mark sits proud of the bar: a raised orb that breaks the top edge,
    ringed in paper so it reads as punched through rather than stuck on. */
 .tabbar { overflow: visible; }
 .tabbar .tab-mass { position: relative; gap: 0; padding-bottom: 8px; }
+/* Flat seasonal disc, no ring — it simply rises out of the bar. */
 .mass-orb {
   display: grid; place-items: center;
-  width: 62px; height: 62px; border-radius: 50%;
-  margin-top: -30px; margin-bottom: 4px;          /* spill over the bar edge */
-  background:
-    radial-gradient(120% 120% at 50% 12%,
-      color-mix(in srgb, var(--season-ink) 82%, var(--paper)) 0%,
-      var(--season-ink) 45%,
-      var(--season-deep) 100%);
-  /* Ivory, not gold: Easter and Christmas tint the orb itself gold, so a gold
-     mark would vanish. Warm white holds against every season. */
-  color: color-mix(in srgb, var(--paper) 88%, #fff);
-  box-shadow:
-    0 0 0 5px color-mix(in srgb, var(--paper) 92%, var(--season-wash)),   /* the punch-through ring */
-    0 10px 22px -8px color-mix(in srgb, var(--season-deep) 78%, transparent),
-    inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent);
-  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease;
+  width: 58px; height: 58px; border-radius: 50%;
+  margin-top: -30px; margin-bottom: 3px;          /* spill over the bar edge */
+  background: var(--season-ink);
+  /* Ivory, not gold: Easter and Christmas tint the disc gold, so a gold mark
+     would vanish. Warm white holds against every season. */
+  color: color-mix(in srgb, var(--paper) 92%, #fff);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background 0.2s ease;
 }
 .mass-orb .ic { display: grid; }
-.mass-orb .ic svg {
-  width: 30px; height: 30px;
-  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--season-deep) 55%, transparent));
-}
+.mass-orb .ic svg { width: 28px; height: 28px; }
 .tabbar .tab-mass .ml {
-  font-family: var(--font-ui); font-size: 0.6rem; font-weight: 700;
+  font-family: var(--font-ui); font-size: 0.58rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.1em; color: var(--season-ink);
 }
 .tabbar .tab-mass:active .mass-orb { transform: scale(0.94); }
-/* A faint gold halo marks the active state without changing the silhouette. */
-.tabbar .tab-mass.active .mass-orb {
-  box-shadow:
-    0 0 0 5px color-mix(in srgb, var(--paper) 92%, var(--season-wash)),
-    0 0 0 6.5px color-mix(in srgb, var(--season-gold) 60%, transparent),
-    0 10px 22px -8px color-mix(in srgb, var(--season-deep) 78%, transparent),
-    inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent);
-}
+.tabbar .tab-mass.active .mass-orb { background: var(--season-deep); }
 
 @media (min-width: 1024px) { .tabbar { display: none; } }
-@media (max-width: 1023px) { .content { padding-bottom: 76px; } .rail { display: none; } }
+@media (max-width: 1023px) { .content { padding-bottom: 96px; } .rail { display: none; } }
+
+/* =====================================================================
+   Watermark — the house mark, washed out, behind the reading surface.
+   ===================================================================== */
+.missal::before {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("/watermark.png");
+  background-repeat: no-repeat;
+  background-position: 92% 88%;
+  background-size: clamp(180px, 26vw, 340px);
+  opacity: 0.055;
+  mix-blend-mode: multiply;
+}
+:root[data-theme="dark"] .missal::before { mix-blend-mode: screen; opacity: 0.045; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .missal::before { mix-blend-mode: screen; opacity: 0.045; }
+}
+/* Raise only the reading surface above the watermark. Do NOT use
+   `.missal > *` here: it has the same specificity as `.tabbar` and `.rail`
+   but comes later, so it would silently override their positioning. */
+.content { position: relative; z-index: 1; }
+.rail { z-index: 2; }
+@media print { .missal::before { display: none; } }
 
 /* floating controls (theme) */
 .controls { position: fixed; top: 14px; right: 14px; z-index: 50; display: flex; gap: 8px; }

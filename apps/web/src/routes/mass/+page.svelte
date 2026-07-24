@@ -22,6 +22,28 @@
     if (want && want !== data.day?.date) getDay(fetch, want).then((d) => (day = d)).catch(() => {});
   });
 
+  // Step a day either way without leaving Mass Mode.
+  const dates = $derived((data.index?.dates ?? []) as string[]);
+  const at = $derived(day ? dates.indexOf(day.date) : -1);
+  const isToday = $derived(day?.date === todayISO());
+  let loading = $state(false);
+
+  async function load(target: string | undefined) {
+    if (!target || loading) return;
+    loading = true;
+    try {
+      day = await getDay(fetch, target);
+      collapsed = {};
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      /* leave the current day in place */
+    } finally {
+      loading = false;
+    }
+  }
+  const step = (delta: number) => load(dates[at + delta]);
+  const goToday = () => load(nearestDate(dates, todayISO()) ?? undefined);
+
   const season = $derived(day ? seasonToken(day.season, day.liturgicalColor, day.celebration) : "neutral");
 
   /** Mass Mode shows the liturgy proper, in celebration order. */
@@ -67,10 +89,26 @@
       <span class="mm-cross">{@html icons.cross}</span>
       <p class="mm-eyebrow">{dateLine(day.date)}</p>
       <h1>{day.celebration ?? dateLine(day.date)}</h1>
-      <p class="mm-season">
-        {#if season !== "neutral"}<span>{seasonLabel(season)}</span>{/if}
-        {#if settings.priestMode}<span class="mm-priest">Priest mode</span>{/if}
-      </p>
+      <!-- Season label flanked by a day stepper. -->
+      <div class="mm-season">
+        <button
+          class="mm-step" onclick={() => step(-1)} disabled={at <= 0 || loading}
+          aria-label="Previous day">{@html icons.minus}</button>
+
+        <span class="mm-tag">{season !== "neutral" ? seasonLabel(season) : "Today’s Mass"}</span>
+
+        <button
+          class="mm-step" onclick={() => step(1)} disabled={at < 0 || at >= dates.length - 1 || loading}
+          aria-label="Next day">{@html icons.plus}</button>
+      </div>
+
+      {#if settings.priestMode}<p class="mm-priest">Priest mode</p>{/if}
+      {#if day && !isToday}
+        <p class="mm-notday">
+          Not today’s liturgy
+          <button onclick={goToday} disabled={loading}>Back to today</button>
+        </p>
+      {/if}
     </header>
 
     <div class="mm-flow">
@@ -122,13 +160,36 @@
     font-family: var(--font-display); font-weight: 560; font-size: clamp(1.8rem, 5vw, 3rem);
     line-height: 1.06; letter-spacing: -0.02em; margin: 0; text-wrap: balance;
   }
-  .mm-season { display: flex; gap: 10px; justify-content: center; margin: 14px 0 0; }
-  .mm-season span {
+  .mm-season { display: flex; gap: 10px; justify-content: center; align-items: center; margin: 16px 0 0; }
+  .mm-tag {
     font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.68rem;
     font-weight: 600; color: var(--season-ink); border: 1px solid var(--hairline);
-    border-radius: 999px; padding: 5px 13px;
+    border-radius: 999px; padding: 7px 15px;
   }
-  .mm-season .mm-priest { color: var(--season-gold); border-color: color-mix(in srgb, var(--season-gold) 45%, transparent); }
+  .mm-step {
+    width: 34px; height: 34px; border-radius: 50%; cursor: pointer; flex-shrink: 0;
+    border: 1px solid var(--hairline); background: transparent; color: var(--season-ink);
+    display: grid; place-items: center;
+  }
+  .mm-step :global(svg) { width: 18px; height: 18px; }
+  .mm-step:hover:not(:disabled) { background: var(--season-ink); color: var(--paper); }
+  .mm-step:disabled { opacity: 0.28; cursor: default; }
+
+  .mm-priest {
+    margin: 10px 0 0; font-family: var(--font-ui); text-transform: uppercase;
+    letter-spacing: 0.1em; font-size: 0.64rem; font-weight: 600; color: var(--season-gold);
+  }
+  .mm-notday {
+    margin: 12px 0 0; display: inline-flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    justify-content: center; font-family: var(--font-ui); font-size: 0.7rem; color: var(--muted);
+  }
+  .mm-notday button {
+    border: 1px solid var(--hairline); background: transparent; color: var(--season-ink);
+    border-radius: 999px; padding: 5px 12px; cursor: pointer;
+    font-family: var(--font-ui); font-size: 0.64rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .mm-notday button:hover { border-color: var(--season-ink); }
 
   .mm-flow { max-width: 44rem; margin: 0 auto; padding: 0 clamp(20px, 5vw, 48px) 120px; }
 

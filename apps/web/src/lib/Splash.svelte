@@ -1,11 +1,11 @@
 <script lang="ts">
   /**
-   * Opening splash — the wordmark on a seasonal wash, shown briefly on first
-   * paint. It inherits --season-* from the shell, so the colour of the splash
-   * *is* the colour of the liturgical day. Skipped for reduced-motion users
-   * and after the first view in a session.
+   * Opening splash — the logo on a seasonal wash. It inherits --season-* from
+   * the shell, so the colour of the splash *is* the colour of the liturgical
+   * day. Shown once a session, and skipped for reduced-motion users.
    */
   import { onMount } from "svelte";
+  import { base } from "$app/paths";
   import { ui } from "$lib/settings.svelte";
 
   let show = $state(false);
@@ -20,11 +20,11 @@
     }
     show = true;
     sessionStorage.setItem("godsword:splash", "1");
-    const t1 = setTimeout(() => (leaving = true), 1150);
+    const t1 = setTimeout(() => (leaving = true), 1250);
     const t2 = setTimeout(() => {
       show = false;
       ui.splashDone = true;
-    }, 1650);
+    }, 1750);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -35,9 +35,7 @@
 {#if show}
   <div class="splash" class:leaving aria-hidden="true">
     <div class="mark">
-      <!-- Placeholder mark: replace with the supplied logo asset. -->
-      <span class="cross">✠</span>
-      <span class="wm">God&rsquo;s Word</span>
+      <img src="{base}/icon-512.png" alt="" width="150" height="150" />
       <span class="rule"></span>
       <span class="tag">Daily Liturgy</span>
     </div>
@@ -47,16 +45,15 @@
 <style>
   .splash {
     position: fixed; inset: 0; z-index: 200; display: grid; place-items: center;
-    background: linear-gradient(170deg, color-mix(in srgb, var(--season-deep) 22%, var(--season-wash)), var(--season-wash));
+    background: linear-gradient(170deg, color-mix(in srgb, var(--season-deep) 24%, var(--season-wash)), var(--season-wash));
     transition: opacity 0.5s ease, transform 0.5s ease;
   }
-  .splash.leaving { opacity: 0; transform: scale(1.03); pointer-events: none; }
-  .mark { display: grid; justify-items: center; gap: 10px; animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
-  @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
-  .cross { color: var(--season-gold); font-size: 2.6rem; line-height: 1; }
-  .wm {
-    font-family: var(--font-display); font-weight: 560; font-size: clamp(1.9rem, 7vw, 2.8rem);
-    letter-spacing: 0.03em; color: var(--ink);
+  .splash.leaving { opacity: 0; transform: scale(1.04); pointer-events: none; }
+  .mark { display: grid; justify-items: center; gap: 16px; animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
+  @keyframes rise { from { opacity: 0; transform: translateY(12px) scale(0.97); } }
+  .mark img {
+    width: clamp(120px, 34vw, 168px); height: auto; border-radius: 26px;
+    box-shadow: 0 18px 40px -14px color-mix(in srgb, var(--season-deep) 60%, transparent);
   }
   .rule { width: 46px; height: 1px; background: color-mix(in srgb, var(--season-gold) 65%, transparent); }
   .tag {

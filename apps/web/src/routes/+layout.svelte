@@ -8,12 +8,12 @@
   import { seasonToken, seasonLabel } from "$lib/liturgical";
   import { todayISO, nearestDate } from "$lib/api";
   import Player from "$lib/Player.svelte";
-  import VerseCard from "$lib/VerseCard.svelte";
   import CommandPalette from "$lib/CommandPalette.svelte";
   import SettingsPanel from "$lib/SettingsPanel.svelte";
   import Splash from "$lib/Splash.svelte";
+  import MassTransition from "$lib/MassTransition.svelte";
   import { openPalette } from "$lib/palette.svelte";
-  import { mass } from "$lib/massMode.svelte";
+  import { mass, showMassCurtain } from "$lib/massMode.svelte";
   import { loadSettings, openSettings, settings, cycleTheme, isDark } from "$lib/settings.svelte";
 
   let { data, children } = $props();
@@ -53,13 +53,21 @@
     return `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}`;
   }
 
+  // In priest mode, Prayers becomes Ministry — homily tips and reflections
+  // sit above the same prayer collection.
+  const prayerTab = $derived(
+    settings.priestMode
+      ? { href: `${base}/ministry/`, label: "Ministry", icon: icons.quote, key: "ministry" }
+      : { href: `${base}/prayers/`, label: "Prayers", icon: icons.beads, key: "prayers" }
+  );
+
   const nav = $derived([
     { href: todayHref, label: "Readings", icon: icons.book, key: "readings" },
     { href: `${base}/mass/`, label: "Mass", icon: icons.cross, key: "mass" },
     { href: `${base}/saint/`, label: "Saint", icon: icons.saint, key: "saint" },
     { href: `${base}/order-of-mass/`, label: "Order of Mass", icon: icons.church, key: "order-of-mass" },
     { href: `${base}/hymns/`, label: "Hymns", icon: icons.note, key: "hymns" },
-    { href: `${base}/prayers/`, label: "Prayers", icon: icons.beads, key: "prayers" },
+    prayerTab,
     { href: `${base}/calendar/`, label: "Calendar", icon: icons.calendar, key: "calendar" },
     { href: `${base}/search/`, label: "Search", icon: icons.search, key: "search" }
   ]);
@@ -67,7 +75,7 @@
   const path = $derived($page.url.pathname);
   const activeKey = $derived.by(() => {
     if (/\/\d{4}\/\d{2}\/\d{2}\//.test(path)) return "readings";
-    for (const k of ["mass", "saint", "order-of-mass", "homily", "hymns", "prayers", "calendar", "search", "about"]) {
+    for (const k of ["mass", "saint", "order-of-mass", "ministry", "homily", "hymns", "prayers", "calendar", "search", "about"]) {
       if (path.includes(`/${k}/`)) return k;
     }
     return "";
@@ -104,15 +112,18 @@
     <a class:active={activeKey === "saint"} href="{base}/saint/">
       <span class="ic">{@html icons.saint}</span>Saint
     </a>
-    <a class="tab-mass" class:active={activeKey === "mass"} href="{base}/mass/" aria-label="Mass Mode">
+    <a
+      class="tab-mass" class:active={activeKey === "mass"} href="{base}/mass/" aria-label="Mass Mode"
+      onclick={() => activeKey !== "mass" && showMassCurtain()}
+    >
       <span class="mass-orb"><span class="ic">{@html icons.crossSolid}</span></span>
       <span class="ml">Mass</span>
     </a>
     <a class:active={activeKey === "hymns"} href="{base}/hymns/">
       <span class="ic">{@html icons.note}</span>Hymns
     </a>
-    <a class:active={activeKey === "prayers"} href="{base}/prayers/">
-      <span class="ic">{@html icons.beads}</span>Prayers
+    <a class:active={activeKey === prayerTab.key} href={prayerTab.href}>
+      <span class="ic">{@html prayerTab.icon}</span>{prayerTab.label}
     </a>
   </nav>
 
@@ -120,8 +131,8 @@
 </div>
 
 <CommandPalette />
-<VerseCard />
 <SettingsPanel />
+<MassTransition />
 
 <div class="controls">
   <button onclick={openPalette} aria-label="Search (⌘K)">{@html icons.search}</button>

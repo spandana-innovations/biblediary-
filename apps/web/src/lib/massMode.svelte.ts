@@ -6,6 +6,17 @@
  */
 export const mass = $state({ active: false });
 
+/** Drives the brief "Mass Mode" curtain shown while entering. */
+export const massEnter = $state({ showing: false });
+
+let curtainTimer: ReturnType<typeof setTimeout> | null = null;
+export function showMassCurtain() {
+  if (typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  massEnter.showing = true;
+  if (curtainTimer) clearTimeout(curtainTimer);
+  curtainTimer = setTimeout(() => (massEnter.showing = false), 980);
+}
+
 let lock: WakeLockSentinel | null = null;
 
 async function acquire() {
