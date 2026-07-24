@@ -1,82 +1,27 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+  import { goto } from "$app/navigation";
   import { base } from "$app/paths";
   import { todayISO, nearestDate } from "$lib/api";
-  let { data } = $props();
 
-  // Center disc opens today's readings (nearest available date).
-  const today = $derived(nearestDate(data.index?.dates ?? [], todayISO()));
-  const dayHref = $derived(today ? `${base}/${today.replaceAll("-", "/")}/` : `${base}/`);
+  let { data } = $props();
+  const target = $derived.by(() => {
+    const d = nearestDate(data.index?.dates ?? [], todayISO());
+    return d ? `${base}/${d.replaceAll("-", "/")}/` : `${base}/calendar/`;
+  });
+  onMount(() => goto(target, { replaceState: true }));
 </script>
 
-<svelte:head><title>{data.index?.edition?.name ?? "God's Word"}</title></svelte:head>
+<svelte:head><title>God's Word — Daily Readings</title></svelte:head>
 
-<div class="home">
-  <svg viewBox="0 0 400 780" role="img" aria-label="God's Word — home">
-    <defs>
-      <linearGradient id="petalG" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#d1332f" />
-        <stop offset="1" stop-color="#a5161b" />
-      </linearGradient>
-      <path id="arcAbout" d="M 150 440 A 98 98 0 0 0 250 440" fill="none" />
-    </defs>
-
-    <g transform="translate(16,20)" opacity="0.16">
-      <path d="M200,318 Q128,190 200,66 Q272,190 200,318 Z" fill="#7a1114" />
-      <path d="M200,318 Q128,540 200,720 Q272,540 200,318 Z" fill="#7a1114" />
-      <path d="M200,318 Q118,244 34,318 Q118,392 200,318 Z" fill="#7a1114" />
-      <path d="M200,318 Q282,244 366,318 Q282,392 200,318 Z" fill="#7a1114" />
-    </g>
-
-    <a href="{base}/order-of-mass/" class="hit" aria-label="Order of the Mass">
-      <path class="petal" d="M200,318 Q128,190 200,66 Q272,190 200,318 Z" fill="url(#petalG)" />
-      <text class="arm-label" x="200" y="150" font-size="26">ORDER</text>
-      <text class="arm-label sub" x="200" y="178" font-size="16">OF THE</text>
-      <text class="arm-label sub" x="200" y="200" font-size="16">MASS</text>
-    </a>
-    <a href="{base}/homily/" class="hit" aria-label="Homily Tips">
-      <path class="petal" d="M200,318 Q128,540 200,720 Q272,540 200,318 Z" fill="url(#petalG)" />
-      <text class="arm-label" x="200" y="606" font-size="26">HOMILY</text>
-      <text class="arm-label sub" x="200" y="634" font-size="16">TIPS</text>
-    </a>
-    <a href="{base}/hymns/" class="hit" aria-label="Popular Hymns">
-      <path class="petal" d="M200,318 Q118,244 34,318 Q118,392 200,318 Z" fill="url(#petalG)" />
-      <text class="arm-label sub" x="78" y="310" font-size="13">POPULAR</text>
-      <text class="arm-label" x="78" y="337" font-size="18">HYMNS</text>
-    </a>
-    <a href="{base}/prayers/" class="hit" aria-label="Prayer Collection">
-      <path class="petal" d="M200,318 Q282,244 366,318 Q282,392 200,318 Z" fill="url(#petalG)" />
-      <text class="arm-label" x="322" y="310" font-size="18">PRAYER</text>
-      <text class="arm-label sub" x="322" y="337" font-size="11">COLLECTION</text>
-    </a>
-
-    <circle cx="200" cy="352" r="96" fill="#2b2b2f" />
-    <a href="{base}/about/" aria-label="About Us">
-      <text class="arc-label" text-anchor="middle"><textPath href="#arcAbout" startOffset="50%">ABOUT US</textPath></text>
-    </a>
-
-    <a href={dayHref} class="hit" aria-label="Today's readings">
-      <circle cx="200" cy="318" r="83" fill="#ffffff" />
-      <text class="logo-word" x="200" y="308" font-size="38">God's</text>
-      <text class="logo-word" x="200" y="352" font-size="38">Word</text>
-    </a>
-  </svg>
+<div class="opening">
+  <span class="cross">✠</span>
+  <p>Opening today's readings…</p>
+  <a href={target}>Continue</a>
 </div>
 
 <style>
-  .home {
-    flex: 1;
-    display: grid;
-    place-items: center;
-    padding: 40px 8px 8px;
-    background:
-      radial-gradient(58% 44% at 50% 42%, color-mix(in srgb, var(--brand) 16%, var(--home-bg)), var(--home-bg) 72%);
-  }
-  svg { width: 100%; height: auto; max-height: 78vh; }
-  .arm-label { fill: #fff; font-family: var(--font-body); font-weight: 700; text-anchor: middle; }
-  .arm-label.sub { font-weight: 600; }
-  .arc-label { fill: rgba(255, 255, 255, 0.72); font: 600 12px var(--font-body); letter-spacing: 1.5px; }
-  .logo-word { fill: var(--brand); font-family: var(--font-display); font-weight: 800; letter-spacing: -1.5px; text-anchor: middle; }
-  .hit { cursor: pointer; }
-  .hit:hover .petal { filter: brightness(1.08); }
-  a { -webkit-tap-highlight-color: transparent; }
+  .opening { min-height: 60vh; display: grid; place-items: center; align-content: center; gap: 10px; text-align: center; color: var(--muted); }
+  .cross { color: var(--season-gold); font-size: 2rem; }
+  .opening a { font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.75rem; color: var(--season-ink); }
 </style>

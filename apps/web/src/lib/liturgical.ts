@@ -1,31 +1,47 @@
 /**
- * Maps a day's liturgical season/colour to the `data-season` attribute that
- * app.css themes from (REBUILD_PLAN §8.2). Kept deliberately small — the colour
- * data already exists in the source, this just normalises it.
+ * Maps a day's season/colour (and celebration) to a `data-season` token that
+ * the liturgical colour engine themes from (REDESIGN §3.2). Non-day pages use
+ * "neutral" (ivory + gold).
  */
 export type Season =
+  | "ordinary"
   | "advent"
-  | "christmas"
   | "lent"
   | "easter"
-  | "ordinary"
-  | "gaudete"
-  | "laetare"
-  | "feast"
-  | "martyr";
+  | "christmas"
+  | "passion"
+  | "rose"
+  | "marian"
+  | "neutral";
 
-/** Normalise free-text season/colour from the content into a theme token. */
-export function seasonToken(season?: string | null, color?: string | null): Season {
+export function seasonToken(season?: string | null, color?: string | null, celebration?: string | null): Season {
   const s = (season ?? "").toLowerCase();
-  if (s.includes("advent")) return "advent";
-  if (s.includes("christmas")) return "christmas";
-  if (s.includes("lent")) return "lent";
-  if (s.includes("easter")) return "easter";
-
   const c = (color ?? "").toLowerCase();
-  if (c === "red") return "feast";
-  if (c === "rose") return "gaudete";
-  if (c === "violet" || c === "purple") return "lent";
+  const t = (celebration ?? "").toLowerCase();
 
+  if (/(assumption|immaculate|our lady|blessed virgin|marian|annunciation|nativity of the b|visitation|queenship)/.test(t)) return "marian";
+  if (s.includes("advent")) return "advent";
+  if (s.includes("lent")) return "lent";
+  if (s.includes("christmas")) return "christmas";
+  if (s.includes("easter")) return "easter";
+  if (c === "rose") return "rose";
+  if (c === "red" || /(palm|passion|pentecost|martyr|good friday|holy cross|triumph)/.test(t)) return "passion";
+  if (c === "violet" || c === "purple") return "lent";
   return "ordinary";
+}
+
+/** Human label for the season, for small-caps metadata. */
+export function seasonLabel(tok: Season): string {
+  const map: Record<Season, string> = {
+    ordinary: "Ordinary Time",
+    advent: "Advent",
+    lent: "Lent",
+    easter: "Eastertide",
+    christmas: "Christmastide",
+    passion: "Passiontide",
+    rose: "Gaudete",
+    marian: "Marian Feast",
+    neutral: ""
+  };
+  return map[tok];
 }
