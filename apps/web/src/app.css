@@ -238,7 +238,7 @@ a { color: inherit; text-decoration: none; }
 :root[data-mass="on"] { --text-reading: clamp(1.3rem, 1.1rem + 0.9vw, 1.6rem); --leading-reading: 1.85; }
 :root[data-mass="on"] .rail,
 :root[data-mass="on"] .tabbar { display: none; }
-:root[data-mass="on"] .missal { display: block; max-width: 46rem; margin: 0 auto; }
+:root[data-mass="on"] .missal { display: block; max-width: 46rem; margin: 0 auto; background: none; }
 :root[data-mass="on"] .ordo-rail { display: none; }
 :root[data-mass="on"] .ordo-grid { grid-template-columns: minmax(0, 1fr); }
 :root[data-mass="on"] .content { padding-bottom: 40px; }
