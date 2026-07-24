@@ -1,0 +1,14 @@
+{
+  "items": [
+    {
+      "type": "hymn",
+      "category": "Holy Mass",
+      "title": "I Will Turn My Steps",
+      "slug": "i-will-turn-my-steps",
+      "order": 1,
+      "composer": null,
+      "audio": "https://audio-in.godsword.in/hymns/i-will-turn-my-steps.mp3",
+      "body": "<!--\n  NOTE (REBUILD_PLAN §7): the legacy DB stored this row's title as the raw\n  filename \"I_WILL_TURN_MY_STEPS.mp3\". Real titles and composer credits are a\n  migration deliverable — this file models the cleaned shape.\n-->\nI will turn my steps to the house of the Lord,\nto the place where his glory dwells."
+    }
+  ]
+}

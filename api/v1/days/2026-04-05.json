@@ -1,0 +1,67 @@
+{
+  "date": "2026-04-05",
+  "edition": "in",
+  "translation": "ESV-CE",
+  "season": "Easter",
+  "liturgicalColor": "white",
+  "celebration": "Easter Sunday of the Resurrection of the Lord",
+  "psalterWeek": 1,
+  "sections": [
+    {
+      "key": "first_reading",
+      "title": "First Reading",
+      "ref": "Acts of the Apostles 10:34a, 37-43",
+      "audio": null,
+      "body": "In those days: Peter opened his mouth and said: \"You yourselves know\nwhat happened throughout all Judea, beginning from Galilee after the\nbaptism that John proclaimed.\""
+    },
+    {
+      "key": "responsorial_psalm",
+      "title": "Responsorial Psalm",
+      "ref": "Psalm 118:1-2, 16-17, 22-23",
+      "audio": null,
+      "body": "**This is the day that the Lord has made; let us rejoice and be glad in it.**\n\nOh give thanks to the Lord, for he is good; for his steadfast love\nendures for ever."
+    },
+    {
+      "key": "second_reading",
+      "title": "Second Reading",
+      "ref": "Colossians 3:1-4",
+      "audio": null,
+      "body": "Brothers and sisters: If then you have been raised with Christ, seek\nthe things that are above, where Christ is, seated at the right hand of God."
+    },
+    {
+      "key": "acclamation",
+      "title": "Gospel Acclamation",
+      "ref": "1 Corinthians 5:7b-8a",
+      "audio": null,
+      "body": "Christ, our paschal lamb, has been sacrificed; let us therefore\ncelebrate the festival."
+    },
+    {
+      "key": "gospel",
+      "title": "Gospel",
+      "ref": "John 20:1-9",
+      "audio": null,
+      "body": "Now on the first day of the week Mary Magdalene came to the tomb early,\nwhile it was still dark, and saw that the stone had been taken away from\nthe tomb."
+    },
+    {
+      "key": "reflection",
+      "title": "Reflection",
+      "ref": null,
+      "audio": null,
+      "body": "The empty tomb is not the end of the story but its beginning. What do we\ncarry back from the garden this morning?"
+    },
+    {
+      "key": "saint",
+      "title": "Saint of the Day",
+      "ref": null,
+      "audio": null,
+      "body": "The Solemnity of the Resurrection displaces the ordinary sanctoral\ncalendar today."
+    },
+    {
+      "key": "intercessions",
+      "title": "Intercessions",
+      "ref": null,
+      "audio": null,
+      "body": "<span class=\"celebrant\">Let us pray to the risen Lord.</span>\n\n<span class=\"rubric\">A brief silence is kept after each intention.</span>\n\n**Lord, hear our prayer.**"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "files": [
+    "/api/v1/days/2026-04-05.json",
+    "/api/v1/days/2026/04.json",
+    "/api/v1/hymns.json",
+    "/api/v1/index.json",
+    "/api/v1/order-of-mass.json",
+    "/api/v1/prayers.json"
+  ]
+}

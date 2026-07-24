@@ -1,0 +1,20 @@
+{
+  "edition": {
+    "id": "in",
+    "name": "God's Word",
+    "country": "India",
+    "translation": "ESV-CE",
+    "locale": "en-IN",
+    "accent": "#ba372a"
+  },
+  "months": [
+    "2026/04"
+  ],
+  "dates": [
+    "2026-04-05"
+  ],
+  "days": 1,
+  "setting": {
+    "forceUpdate": false
+  }
+}

@@ -1,0 +1,7 @@
+import{a as e,f as o}from"../chunks/BcI806YQ.js";import"../chunks/DRIMS7St.js";import{f as i,e as r,$ as l,c as n}from"../chunks/CDM9_aTh.js";import{h as c}from"../chunks/BHzwNQm4.js";import{R as p}from"../chunks/CUDHtruk.js";var d=o(`<!> <div class="sheet"><h2 class="sec-h">God's Word</h2> <p class="body-txt">God's Word App is an initiative of ST PAULS Biblical Centre (SPBC), to assist you to pray on
+    the go. Its distinct features like complete liturgical readings of the day, with audio text,
+    inspiring reflections and daily intercessions will add to the quality of your personal prayer life.</p> <p class="body-txt">Besides these, there are additional homily tips for each day, some popular hymns as well as a
+    collection of popular prayers, novenas and litanies which will be handy for your personal as well
+    as family use.</p> <p class="body-txt">Contact us: biblicalcentre@stpauls.in</p> <p class="body-txt">Fr Joe Eruppakkatt, SSP — Director (SPBC)</p> <h2 class="sec-h">About Us</h2> <p class="body-txt">The Society of Saint Paul was born with the specific charism to spread the Christian message and
+    values through the means of communication, from the Apostolate of the Press to using all the
+    latest and fastest means of communication today.</p></div>`,1);function g(a){var t=d();c("cwls5q",h=>{r(()=>{l.title="About Us"})});var s=i(t);p(s,{title:"About us"}),n(2),e(a,t)}export{g as component};
