@@ -1,15 +1,34 @@
 <script lang="ts">
   import { base } from "$app/paths";
   import { icons } from "$lib/icons";
-  import type { SearchItem } from "$lib/api";
+  import { getSearch, type SearchItem } from "$lib/api";
 
-  let { data } = $props();
   let q = $state("");
+
+  // The index is 2 MB. Loading it in `load` meant the prerendered page carried
+  // the whole thing inline — a 2.3 MB HTML file for anyone who opened Search.
+  // Fetch it on the first keystroke instead, as the ⌘K palette already does.
+  let items: SearchItem[] = $state([]);
+  let loaded = $state(false);
+  let loading = $state(false);
+
+  async function ensureLoaded() {
+    if (loaded || loading) return;
+    loading = true;
+    try {
+      items = await getSearch(fetch);
+      loaded = true;
+    } catch {
+      /* offline, or the index hasn't been built */
+    } finally {
+      loading = false;
+    }
+  }
 
   const results = $derived.by(() => {
     const tokens = q.toLowerCase().split(/\s+/).filter(Boolean);
     if (!tokens.length) return [] as SearchItem[];
-    return (data.items as SearchItem[])
+    return items
       .map((it) => ({ it, hay: `${it.title} ${it.sub} ${it.text}`.toLowerCase() }))
       .filter(({ hay }) => tokens.every((t) => hay.includes(t)))
       .slice(0, 60)
@@ -36,7 +55,10 @@
   <div class="searchbar">
     <span class="si">{@html icons.search}</span>
     <!-- svelte-ignore a11y_autofocus -->
-    <input type="search" placeholder="Search readings, prayers, hymns…" bind:value={q} autocomplete="off" autofocus />
+    <input
+      type="search" placeholder="Search readings, prayers, hymns…" bind:value={q}
+      autocomplete="off" autofocus onfocus={ensureLoaded} oninput={ensureLoaded}
+    />
     <kbd>⌘K</kbd>
   </div>
 </div>
@@ -47,6 +69,11 @@
       <span class="e-ic">{@html icons.book}</span>
       Search across daily readings, prayers, hymns and the Order of Mass.
       <span class="e-sub">Tip: press <kbd>⌘K</kbd> anywhere to search in a flash.</span>
+    </p>
+  {:else if !loaded}
+    <p class="empty">
+      <span class="e-ic">{@html icons.search}</span>
+      Loading the index…
     </p>
   {:else if results.length === 0}
     <p class="empty">

@@ -6,6 +6,9 @@
     settings, ui, closeSettings, FONT_STEPS,
     setFontScale, setMinistryMode, setTheme, set
   } from "$lib/settings.svelte";
+  import { offline, downloadMonth, clearOffline, currentMonth, monthLabel } from "$lib/offline.svelte";
+
+  const thisMonth = currentMonth();
 
   let voices: SpeechSynthesisVoice[] = $state([]);
 
@@ -120,6 +123,36 @@
           <button class="ghost" onclick={preview}>{@html icons.sound}<span>Preview voice</span></button>
         </section>
 
+        <!-- Offline -->
+        {#if offline.supported}
+          <section class="grp">
+            <h3>Offline</h3>
+            <div class="row">
+              <div class="lbl">
+                <span>Save {monthLabel(thisMonth)}</span>
+                <span class="hint">
+                  Today and the fortnight around it are already saved. Add a whole month
+                  for travel — about a megabyte.
+                </span>
+              </div>
+              <button class="ghost sm" disabled={offline.busy} onclick={() => downloadMonth(thisMonth)}>
+                {offline.busy ? "Saving…" : "Save"}
+              </button>
+            </div>
+
+            {#if offline.busy && offline.total}
+              <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax={offline.total} aria-valuenow={offline.cached}>
+                <span style="width: {(offline.cached / offline.total) * 100}%"></span>
+              </div>
+            {/if}
+            {#if offline.message}<p class="note">{offline.message}</p>{/if}
+
+            <button class="ghost sm quiet" disabled={offline.busy} onclick={clearOffline}>
+              Remove offline copies
+            </button>
+          </section>
+        {/if}
+
         <!-- Account -->
         <section class="grp">
           <h3>Account</h3>
@@ -212,6 +245,14 @@
   .ghost :global(svg) { width: 16px; height: 16px; }
   .ghost.sm { margin: 0; padding: 8px 14px; }
   .ghost:disabled { opacity: 0.5; cursor: default; }
+  .ghost.quiet { margin-top: 14px; color: var(--muted); }
+
+  .bar {
+    height: 4px; border-radius: 999px; margin: 14px 0 0;
+    background: color-mix(in srgb, var(--ink) 10%, transparent); overflow: hidden;
+  }
+  .bar span { display: block; height: 100%; background: var(--season-ink); transition: width 0.2s ease; }
+  .note { font-family: var(--font-ui); font-size: 0.76rem; color: var(--muted); margin: 10px 0 0; }
 
   .links { display: grid; gap: 2px; }
   .links a {

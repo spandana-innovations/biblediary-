@@ -8,12 +8,12 @@
  *
  * Output map (mirrors the eight legacy endpoints, all reads):
  *   api/v1/index.json                 → setting + about + available months (getdata index)
- *   api/v1/days/<YYYY>/<MM>.json       → all days in a month (bulk getdata)
  *   api/v1/days/<YYYY>-<MM>-<DD>.json  → one day
+ *   api/v1/calendar.json               → date → season/colour/celebration, for the month grid
  *   api/v1/prayers.json                → prayerCollection
  *   api/v1/hymns.json                  → hymnsSongs
  *   api/v1/order-of-mass.json          → orderMassCollection
- *   api/v1/manifest.json               → flat file list for the service-worker precache
+ *   api/v1/manifest.json               → core endpoints + day list for the service worker
  */
 import { readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, statSync } from "node:fs";
 import { join, dirname, relative } from "node:path";
@@ -60,7 +60,9 @@ function audioUrl(path) {
 function write(relPath, obj) {
   const full = join(OUT, relPath);
   mkdirSync(dirname(full), { recursive: true });
-  writeFileSync(full, JSON.stringify(obj, null, 2));
+  // Minified: nothing reads these by eye, and the indentation was a fifth of
+  // the API's size on disk. Pretty-print with API_PRETTY=1 when debugging.
+  writeFileSync(full, JSON.stringify(obj, null, process.env.API_PRETTY ? 2 : 0));
   return relPath;
 }
 
@@ -72,6 +74,12 @@ try {
 } catch {
   /* not resolved yet — the Saint page falls back to a typographic medallion */
 }
+
+// Start from an empty directory. Without this, files the build stopped
+// emitting — the old per-month bundles, days dropped from the content set —
+// survived in place and shipped forever.
+rmSync(OUT, { recursive: true, force: true });
+mkdirSync(OUT, { recursive: true });
 
 const emitted = [];
 
@@ -119,7 +127,9 @@ for (const doc of dayDocs) {
   if (!months.has(key)) months.set(key, []);
   months.get(key).push(day);
 }
-for (const [key, days] of months) emitted.push(write(`days/${key}.json`, { month: key, days }));
+// Month bundles used to be emitted here. Nothing ever requested them and they
+// duplicated every day's body, so they cost 13 MB of the API for nothing.
+// `months` is still tracked because index.json advertises the range.
 
 // ---- Shared collections ---------------------------------------------------
 function collection(subdir) {
@@ -145,7 +155,11 @@ const strip = (s) => (s ?? "").replace(/<[^>]+>/g, " ").replace(/[*_#>`]/g, " ")
 const searchItems = [];
 for (const doc of dayDocs) {
   const d = doc.data;
-  const text = (d.sections ?? []).map((s) => `${s.title} ${s.ref ?? ""} ${s.body ?? ""}`).join(" ");
+  // Index the opening of each section rather than the whole thing: enough to
+  // match on, at a twentieth of the weight.
+  const text = (d.sections ?? [])
+    .map((s) => `${s.title} ${s.ref ?? ""} ${strip(s.body ?? "").slice(0, 220)}`)
+    .join(" ");
   searchItems.push({
     type: "Reading",
     title: d.celebration ?? String(d.date),
@@ -177,6 +191,21 @@ for (const doc of dayDocs) {
 }
 emitted.push(write("saints.json", { items: saints }));
 
+// ---- Calendar ribbon ------------------------------------------------------
+// One compact row per day so the month grid can tint each cell by its
+// liturgical colour without fetching 30 day files. Kept deliberately tiny —
+// the whole three-year range is ~90 KB, small enough to precache.
+const calendar = {};
+for (const doc of dayDocs) {
+  const d = doc.data;
+  calendar[String(d.date)] = {
+    s: d.season ?? null,
+    c: d.liturgicalColor ?? null,
+    t: d.celebration ?? null
+  };
+}
+emitted.push(write("calendar.json", { days: calendar }));
+
 // ---- Index + manifest -----------------------------------------------------
 emitted.push(
   write("index.json", {
@@ -196,8 +225,18 @@ emitted.push(
   })
 );
 
-const manifest = emitted.map((p) => `/api/v1/${p}`).sort();
-write("manifest.json", { files: manifest });
+// The manifest is split rather than flat because the service worker used to
+// `addAll` the whole thing: 1,138 files and 38 MB pulled down on first visit,
+// most of it archive nobody had asked for. `core` is the handful of small
+// endpoints worth having before the network drops; days are named, not listed
+// as URLs, so the worker can fetch a window around today and a month on demand.
+const dayPaths = new Set(dayDocs.map((d) => `days/${String(d.data.date)}.json`));
+const core = emitted.filter((p) => !dayPaths.has(p) && p !== "search.json").map((p) => `/api/v1/${p}`).sort();
+write("manifest.json", {
+  core,
+  search: "/api/v1/search.json",
+  dates: dayDocs.map((d) => String(d.data.date))
+});
 
 console.log(
   `[build-api] EDITION=${EDITION} → ${dayDocs.length} day(s), ` +

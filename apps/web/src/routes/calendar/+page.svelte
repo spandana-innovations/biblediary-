@@ -1,11 +1,13 @@
 <script lang="ts">
   import { base } from "$app/paths";
   import { icons } from "$lib/icons";
-  import { todayISO, nearestDate } from "$lib/api";
+  import { todayISO, nearestDate, type CalendarDay } from "$lib/api";
+  import { seasonToken, seasonLabel, swatchLabel, type Season } from "$lib/liturgical";
 
   let { data } = $props();
   const dates = $derived((data.index?.dates ?? []) as string[]);
   const available = $derived(new Set(dates));
+  const cal = $derived((data.calendar ?? {}) as Record<string, CalendarDay>);
   const today = todayISO();
 
   // Open on the month of the nearest available date (so it has content).
@@ -16,6 +18,19 @@
   const MON = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const DOW = ["S", "M", "T", "W", "T", "F", "S"];
 
+  /** The liturgical colour token for a date, or null if it has no entry. */
+  function tokenFor(iso: string): Season | null {
+    const d = cal[iso];
+    if (!d) return null;
+    return seasonToken(d.s, d.c, d.t);
+  }
+  /** What to call the day, for tooltips and the reading strip. */
+  function labelFor(iso: string): string {
+    const d = cal[iso];
+    if (!d) return "";
+    return d.t || seasonLabel(seasonToken(d.s, d.c, d.t), d.s);
+  }
+
   const cells = $derived.by(() => {
     const first = new Date(Date.UTC(year, month, 1)).getUTCDay();
     const count = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
@@ -25,6 +40,53 @@
     return out;
   });
   const hasThisMonth = $derived(cells.some((c) => c && available.has(c)));
+
+  /**
+   * The seasons this month actually passes through, in the order they appear —
+   * the legend explains only the colours on screen, so it stays short and
+   * changes as you page through the year.
+   */
+  // Several tokens share one vesture colour. The legend explains colours, so
+  // it collapses them: two identical purple dots labelled differently would
+  // suggest a distinction the grid doesn't draw.
+  const VESTURE: Record<Season, string> = {
+    ordinary: "green", advent: "violet", lent: "violet", violet: "violet",
+    easter: "gold", christmas: "gold", white: "gold", neutral: "gold",
+    passion: "red", rose: "rose", marian: "blue"
+  };
+
+  const legend = $derived.by(() => {
+    const out: { token: Season; label: string }[] = [];
+    const seen = new Set<string>();
+    for (const iso of cells) {
+      if (!iso) continue;
+      const d = cal[iso];
+      if (!d) continue;
+      const token = seasonToken(d.s, d.c, d.t);
+      const colour = VESTURE[token];
+      if (seen.has(colour)) continue;
+      seen.add(colour);
+      out.push({ token, label: swatchLabel(token) });
+    }
+    return out;
+  });
+
+  /**
+   * Which days get a bar under the number. The legacy content isn't ranked —
+   * only eight of 1,096 days carry a "– Solemnity" suffix — so matching on the
+   * celebration text alone would either miss almost everything or, with a
+   * looser pattern, mark every weekday of Eastertide. Sundays come from the
+   * date and are always right; the explicit ranks are taken where they exist.
+   */
+  function isFeast(iso: string): boolean {
+    const [y, m, d] = iso.split("-").map(Number);
+    if (new Date(Date.UTC(y, m - 1, d)).getUTCDay() === 0) return true;
+    const t = (cal[iso]?.t ?? "").trim();
+    if (/[-–—]\s*(solemnity|feast)\s*$/i.test(t)) return true;
+    // The authors shout the great days: ASH WEDNESDAY, EPIPHANY OF THE LORD.
+    const words = t.replace(/[^A-Za-z ]/g, " ").split(/\s+/).filter((w) => w.length > 2);
+    return words.length > 0 && words.every((w) => w === w.toUpperCase());
+  }
 
   function shift(delta: number) {
     let m = month + delta;
@@ -60,12 +122,28 @@
       {#if iso === null}
         <span class="cell empty"></span>
       {:else if available.has(iso)}
-        <a class="cell has" class:today={iso === today} href={href(iso)} aria-label={`Readings for ${iso}`}>{Number(iso.slice(8))}</a>
+        <a
+          class="cell has" class:today={iso === today} class:feast={isFeast(iso)}
+          data-season={tokenFor(iso) ?? "neutral"}
+          href={href(iso)}
+          title={labelFor(iso)}
+          aria-label={`${labelFor(iso) || "Readings"} — ${iso}`}
+        >
+          <span class="n">{Number(iso.slice(8))}</span>
+        </a>
       {:else}
-        <span class="cell off" class:today={iso === today}>{Number(iso.slice(8))}</span>
+        <span class="cell off" class:today={iso === today}><span class="n">{Number(iso.slice(8))}</span></span>
       {/if}
     {/each}
   </div>
+
+  {#if legend.length}
+    <ul class="legend">
+      {#each legend as l (l.token)}
+        <li data-season={l.token}><span class="dot"></span>{l.label}</li>
+      {/each}
+    </ul>
+  {/if}
 
   {#if !hasThisMonth}
     <p class="none">No readings loaded for {MON[month]} {year} yet.</p>
@@ -95,11 +173,50 @@
   .dow { margin: 20px 0 6px; }
   .dowc { text-align: center; color: var(--muted); font-family: var(--font-ui); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-  .cell { aspect-ratio: 1; display: grid; place-items: center; border-radius: 10px; font-size: 0.98rem; font-family: var(--font-body); font-variant-numeric: tabular-nums; }
+
+  .cell {
+    position: relative; aspect-ratio: 1; display: grid; place-items: center; border-radius: 10px;
+    font-size: 0.98rem; font-family: var(--font-body); font-variant-numeric: tabular-nums;
+  }
   .cell.off { color: var(--muted); opacity: 0.5; }
-  .cell.has { color: var(--season-ink); font-weight: 640; border: 1px solid color-mix(in srgb, var(--season-ink) 26%, transparent); background: color-mix(in srgb, var(--season-ink) 7%, transparent); }
-  .cell.has:hover { background: var(--season-ink); color: var(--paper); }
+
+  /* Each day carries its own data-season, so --season-ink here is that day's
+     liturgical colour rather than the page's. */
+  .cell.has {
+    color: var(--season-deep); font-weight: 620;
+    border: 1px solid color-mix(in srgb, var(--season-ink) 30%, transparent);
+    background: color-mix(in srgb, var(--season-ink) 12%, transparent);
+    transition: background 0.14s ease, color 0.14s ease, transform 0.14s ease;
+  }
+  .cell.has:hover { background: var(--season-ink); color: var(--paper); transform: translateY(-1px); }
+  .cell.has .n { position: relative; z-index: 1; }
+
+  /* Feasts and Sundays get a bar along the foot in the day's own colour, so
+     the shape of the week reads at a glance without extra chrome. */
+  .cell.feast::after {
+    content: ""; position: absolute; left: 26%; right: 26%; bottom: 5px; height: 2px;
+    border-radius: 2px; background: var(--season-ink);
+  }
+  .cell.has:hover.feast::after { background: var(--paper); }
+
   .cell.today { outline: 2px solid var(--season-gold); outline-offset: 1px; }
+
+  /* --season-deep is a deep shade for ink on paper; at night it disappears
+     into the tint, so the number takes the lighter --season-ink instead. */
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme="light"])) .cell.has { color: var(--season-ink); }
+  }
+  :global(:root[data-theme="dark"]) .cell.has { color: var(--season-ink); }
+
+  .legend {
+    list-style: none; display: flex; flex-wrap: wrap; gap: 8px 18px;
+    margin: 22px 0 0; padding: 0; max-width: 34rem;
+  }
+  .legend li {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--font-ui); font-size: 0.72rem; color: var(--muted);
+  }
+  .legend .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--season-ink); flex-shrink: 0; }
 
   .none { color: var(--muted); font-style: italic; margin: 18px 0 0; max-width: 34rem; text-align: center; }
   .jump-h { font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.72rem; font-weight: 600; color: var(--muted); margin: 40px 0 12px; }

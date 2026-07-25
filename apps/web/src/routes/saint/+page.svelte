@@ -24,7 +24,9 @@
   // ---- find a saint ----
   let q = $state("");
   let all: SaintEntry[] = $state([]);
-  let loadedAll = false;
+  // Reactive: the "Loading…" line has to flip to "No saint matching…" once the
+  // index arrives, and a plain `let` never notifies.
+  let loadedAll = $state(false);
 
   async function ensureIndex() {
     if (loadedAll) return;

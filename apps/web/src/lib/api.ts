@@ -122,6 +122,19 @@ export interface SaintEntry {
 export const getSaints = (f: typeof fetch) =>
   getJson<{ items: SaintEntry[] }>(f, "saints.json").then((r) => r.items);
 
+/**
+ * One compact row per day — season, colour, celebration — so the month grid
+ * can tint every cell without fetching thirty day files. Keys are short
+ * because this ships for the whole three-year range.
+ */
+export interface CalendarDay {
+  s: string | null;
+  c: string | null;
+  t: string | null;
+}
+export const getCalendar = (f: typeof fetch) =>
+  getJson<{ days: Record<string, CalendarDay> }>(f, "calendar.json").then((r) => r.days);
+
 export const getIndex = (f: typeof fetch) => getJson<ApiIndex>(f, "index.json");
 export const getSearch = (f: typeof fetch) => getJson<{ items: SearchItem[] }>(f, "search.json").then((r) => r.items);
 export const getDay = (f: typeof fetch, date: string) => getJson<Day>(f, `days/${date}.json`);

@@ -65,3 +65,26 @@ export function seasonLabel(tok: Season, season?: string | null): string {
   if (s) return s;
   return LABELS[tok];
 }
+
+/**
+ * What a swatch of this colour means — for legends, where the day's own season
+ * text is the wrong answer. A red memorial in July still reads "Ordinary Time"
+ * as its season, which would give a calendar legend three identical entries.
+ */
+const SWATCHES: Record<Season, string> = {
+  ordinary: "Ordinary Time",
+  advent: "Advent",
+  lent: "Lent",
+  easter: "Eastertide",
+  christmas: "Christmastide",
+  passion: "Martyrs & Passion",
+  rose: "Gaudete / Laetare",
+  marian: "Our Lady",
+  violet: "Penitential",
+  white: "Feasts & Solemnities",
+  neutral: "Feasts & Solemnities"
+};
+
+export function swatchLabel(tok: Season): string {
+  return SWATCHES[tok];
+}
