@@ -19,6 +19,15 @@
 
   /* User text-size preference (Settings → Text size) scales all reading copy. */
   --font-scale: 1;
+
+  /* Device insets, named once so page heads can add them without each
+     repeating the env() fallback. Zero in a browser tab; on an iPhone with the
+     app installed to the Home Screen these are the status bar and the notch,
+     and anything pinned to an edge has to clear them. Requires
+     viewport-fit=cover in app.html to report real values. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
   --text-reading: calc(clamp(1.125rem, 1rem + 0.5vw, 1.3125rem) * var(--font-scale));
   --leading-reading: 1.75;
   --measure: 66ch;
@@ -200,18 +209,31 @@ a { color: inherit; text-decoration: none; }
 /* =====================================================================
    Watermark — the house mark, washed out, behind the reading surface.
    ===================================================================== */
+/* Painted as a mask rather than an image, so the mark takes the season's own
+   ink. A grey PNG under `mix-blend-mode` needed a different blend per theme
+   and still went muddy over tinted surfaces; a mask is one rule for both.
+   `.missal` is fixed-position and wraps every route, so this rides along on
+   every page — readings, calendar, prayers, Mass Mode alike. */
 .missal::before {
-  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background-image: url("/watermark.png");
-  background-repeat: no-repeat;
-  background-position: 92% 88%;
-  background-size: clamp(180px, 26vw, 340px);
+  content: ""; position: fixed; z-index: 0; pointer-events: none;
+  right: clamp(-56px, -5vw, -22px);
+  bottom: calc(clamp(58px, 12vw, 96px) + env(safe-area-inset-bottom, 0px));
+  width: clamp(210px, 34vw, 330px); aspect-ratio: 503 / 560;
+  background: var(--season-ink);
+  -webkit-mask-image: url("/logo-mark.png"); mask-image: url("/logo-mark.png");
+  -webkit-mask-size: contain; mask-size: contain;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: bottom right; mask-position: bottom right;
   opacity: 0.055;
-  mix-blend-mode: multiply;
 }
-:root[data-theme="dark"] .missal::before { mix-blend-mode: screen; opacity: 0.045; }
+/* Clear of the tab bar on phones; tucked into the bottom corner on desktop,
+   where the rail owns the left edge and nothing else is down there. */
+@media (min-width: 1024px) {
+  .missal::before { right: clamp(-40px, -3vw, -14px); bottom: clamp(-30px, -2vw, -10px); }
+}
+:root[data-theme="dark"] .missal::before { opacity: 0.075; }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .missal::before { mix-blend-mode: screen; opacity: 0.045; }
+  :root:not([data-theme="light"]) .missal::before { opacity: 0.075; }
 }
 /* Raise only the reading surface above the watermark. Do NOT use
    `.missal > *` here: it has the same specificity as `.tabbar` and `.rail`
@@ -229,11 +251,28 @@ a { color: inherit; text-decoration: none; }
 }
 .controls button svg, .controls a svg { width: 18px; height: 18px; }
 
+/* The floating controls hover over the top-right corner of every page, and the
+   first line of a page head is usually a long eyebrow. On a phone the two
+   collide and the eyebrow gets clipped, so reserve the button's footprint.
+   Global on purpose: every page names its top line `.eyebrow`. */
+@media (max-width: 700px) {
+  .eyebrow { padding-right: 52px; }
+}
+
 /* Generic page furniture for non-day pages. Head and body share the same
    left edge and gutter so titles line up with the content beneath them. */
-.page-head { max-width: 68rem; padding: clamp(28px, 6vw, 56px) clamp(20px, 5vw, 60px) 0; }
+.page-head {
+  max-width: 68rem;
+  padding: calc(clamp(28px, 6vw, 56px) + var(--safe-top))
+           max(clamp(20px, 5vw, 60px), var(--safe-right)) 0
+           max(clamp(20px, 5vw, 60px), var(--safe-left));
+}
 .page-head h1 { font-family: var(--font-display); font-weight: 560; font-size: clamp(1.8rem, 4vw, 2.6rem); letter-spacing: -0.01em; margin: 0 0 6px; }
-.page-body { max-width: calc(var(--measure) + clamp(40px, 10vw, 120px)); padding: 8px clamp(20px, 5vw, 60px) 80px; }
+.page-body {
+  max-width: calc(var(--measure) + clamp(40px, 10vw, 120px));
+  padding: 8px max(clamp(20px, 5vw, 60px), var(--safe-right)) 80px
+              max(clamp(20px, 5vw, 60px), var(--safe-left));
+}
 .page-body.wide { max-width: 68rem; }
 
 /* reading typography */

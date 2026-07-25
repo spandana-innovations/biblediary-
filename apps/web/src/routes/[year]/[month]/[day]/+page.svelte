@@ -223,7 +223,12 @@
   /* ---- book-plate hero ---- */
   .hero {
     background: linear-gradient(180deg, color-mix(in srgb, var(--season-deep) 12%, var(--season-wash)), var(--season-wash));
-    padding: clamp(40px, 8vw, 92px) clamp(20px, 5vw, 60px) clamp(24px, 4vw, 40px);
+    /* Clears the status bar and the notch when installed to the Home Screen;
+       --safe-top is 0 in a browser tab. */
+    padding: calc(clamp(40px, 8vw, 92px) + var(--safe-top))
+             max(clamp(20px, 5vw, 60px), var(--safe-right))
+             clamp(24px, 4vw, 40px)
+             max(clamp(20px, 5vw, 60px), var(--safe-left));
   }
   .plate {
     max-width: 52rem; margin: 0 auto; position: relative;

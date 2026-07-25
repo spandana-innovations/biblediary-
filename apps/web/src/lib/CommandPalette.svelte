@@ -128,7 +128,8 @@
 <style>
   .pal-scrim {
     position: fixed; inset: 0; z-index: 100; background: color-mix(in srgb, var(--ink) 32%, transparent);
-    backdrop-filter: blur(3px); display: grid; align-items: start; justify-items: center; padding: 12vh 16px 16px;
+    backdrop-filter: blur(3px); display: grid; align-items: start; justify-items: center;
+    padding: calc(12vh + var(--safe-top)) 16px 16px;
     animation: fade 0.15s ease;
   }
   @keyframes fade { from { opacity: 0; } }

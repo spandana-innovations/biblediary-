@@ -2,7 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- viewport-fit=cover is what makes env(safe-area-inset-*) report real
+         values. Installed to the Home Screen, iOS draws the page behind the
+         status bar and the Dynamic Island; without this the insets are all 0
+         and the floating controls sit under the clock. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="Daily Catholic liturgy — readings, psalms, gospel, reflection, prayers and hymns." />
     <link rel="icon" href="%sveltekit.assets%/favicon-32.png" sizes="32x32" type="image/png" />
     <link rel="icon" href="%sveltekit.assets%/icon-192.png" sizes="192x192" type="image/png" />

@@ -81,7 +81,13 @@
 
 <style>
   .controls {
-    position: fixed; top: 14px; right: 14px; z-index: 50;
+    position: fixed; z-index: 50;
+    /* Installed to the Home Screen, iOS puts the page behind the status bar
+       and the Dynamic Island. A flat 14px left the toggle half under the
+       clock; the inset is 0 in a normal browser tab, so this costs nothing
+       there. */
+    top: calc(14px + env(safe-area-inset-top, 0px));
+    right: max(14px, env(safe-area-inset-right, 0px));
     display: grid; justify-items: center; gap: 8px;
   }
   .ctl-toggle, .ctl-item {

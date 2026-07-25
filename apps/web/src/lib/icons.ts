@@ -43,6 +43,20 @@ export const icons = {
    * Latin cross, solid with rounded terminals — the Mass mark. Filled so it
    * holds its weight inside the raised tab-bar orb at 24px.
    */
+  /**
+   * The house device — the flame standing on the open book — drawn as an icon
+   * rather than sampled from the logo, because "God's Word" set in blackletter
+   * is unreadable at 30px. Solid, so it carries weight inside the tab-bar orb,
+   * and on currentColor so the orb's own colour shows through the flame.
+   */
+  flameBook: (() =>
+    `<svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd">` +
+    // flame, hollowed so the orb colour reads as the inner light
+    `<path d="M12 1.9c3.3 3.6 4.9 6.2 4.9 8.4a4.9 4.9 0 1 1-9.8 0c0-2.2 1.6-4.8 4.9-8.4zm0 4.6c-1.7 2.2-2.5 3.6-2.5 4.8a2.5 2.5 0 0 0 5 0c0-1.2-.8-2.6-2.5-4.8z"/>` +
+    // the open book beneath it
+    `<path d="M11.2 16.6C9.1 15.4 6.4 14.8 3.6 14.8c-.6 0-1 .4-1 1v3.4c0 .5.4 1 1 1 2.8 0 5.5.6 7.6 1.8zm1.6 0c2.1-1.2 4.8-1.8 7.6-1.8.6 0 1 .4 1 1v3.4c0 .5-.4 1-1 1-2.8 0-5.5.6-7.6 1.8z"/>`+
+    `</svg>`)(),
+
   crossSolid: f(
     // Latin proportions: crossbar raised to ~1/3, upper arm 5 units to a
     // 12-unit stem, so it reads as a cross and never as a plus sign.

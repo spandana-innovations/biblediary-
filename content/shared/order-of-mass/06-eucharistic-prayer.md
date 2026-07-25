@@ -2,7 +2,7 @@
 type: order-of-mass
 title: The Eucharistic Prayer
 slug: eucharistic-prayer
-order: 5
+order: 6
 audio: null
 ---
 <span class="rubric">The Priest begins the Eucharistic Prayer with the Preface Dialogue.</span>

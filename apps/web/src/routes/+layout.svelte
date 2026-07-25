@@ -55,14 +55,14 @@
       ? [
           { href: todayHref, label: "Readings", icon: icons.book, key: "readings" },
           { href: `${base}/homily/`, label: "Homily", icon: icons.quote, key: "homily" },
-          { href: `${base}/mass/`, label: "Mass", icon: icons.cross, key: "mass" },
+          { href: `${base}/mass/`, label: "Mass", icon: icons.flameBook, key: "mass" },
           { href: `${base}/reflections/`, label: "Reflect", icon: icons.candle, key: "reflections" },
           { href: `${base}/notes/`, label: "Notes", icon: icons.note_pen, key: "notes" }
         ]
       : [
           { href: todayHref, label: "Readings", icon: icons.book, key: "readings" },
           { href: `${base}/saint/`, label: "Saint", icon: icons.saint, key: "saint" },
-          { href: `${base}/mass/`, label: "Mass", icon: icons.cross, key: "mass" },
+          { href: `${base}/mass/`, label: "Mass", icon: icons.flameBook, key: "mass" },
           { href: `${base}/hymns/`, label: "Hymns", icon: icons.note, key: "hymns" },
           { href: `${base}/prayers/`, label: "Prayers", icon: icons.beads, key: "prayers" }
         ]
@@ -71,7 +71,7 @@
   /** The rail carries the tab set plus everything else. */
   const nav = $derived([
     ...tabs.filter((t) => t.key !== "mass"),
-    { href: `${base}/mass/`, label: "Mass Mode", icon: icons.cross, key: "mass" },
+    { href: `${base}/mass/`, label: "Mass Mode", icon: icons.flameBook, key: "mass" },
     { href: `${base}/order-of-mass/`, label: "Order of Mass", icon: icons.church, key: "order-of-mass" },
     ...(settings.ministryMode
       ? [
@@ -116,7 +116,8 @@
     {@render children()}
   </main>
 
-  <!-- Mobile tab bar: Mass sits in the centre as a raised cross. -->
+  <!-- Mobile tab bar: Mass sits in the centre as a raised orb carrying the
+       house mark — the flame on the open book. -->
   <nav class="tabbar" aria-label="Sections">
     {#each tabs as t (t.key)}
       {#if t.key === "mass"}
@@ -124,7 +125,7 @@
           class="tab-mass" class:active={activeKey === "mass"} href={t.href} aria-label="Mass Mode"
           onclick={() => activeKey !== "mass" && showMassCurtain()}
         >
-          <span class="mass-orb"><span class="ic">{@html icons.crossSolid}</span></span>
+          <span class="mass-orb"><span class="ic">{@html icons.flameBook}</span></span>
           <span class="ml">Mass</span>
         </a>
       {:else}

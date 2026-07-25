@@ -11,6 +11,9 @@ export interface Settings {
   /** Ministry mode surfaces homily tips, reflections and notes, and
    *  re-optimises Mass Mode for the celebrant. */
   ministryMode: boolean;
+  /** Interleave the Ordinary of the Mass — the fixed prayers and responses —
+   *  into Mass Mode at the points where they are actually said. */
+  massPrayers: boolean;
   theme: ThemeMode;
   /** Speech synthesis rate for Listen. */
   voiceRate: number;
@@ -28,6 +31,7 @@ export const FONT_STEPS = [
 const DEFAULTS: Settings = {
   fontScale: 1,
   ministryMode: false,
+  massPrayers: true,
   theme: "auto",
   voiceRate: 1,
   voiceURI: ""

@@ -79,6 +79,26 @@
           </div>
         </section>
 
+        <!-- Mass -->
+        <section class="grp">
+          <h3>Mass</h3>
+          <div class="row">
+            <div class="lbl">
+              <span>Prayers in Mass Mode</span>
+              <span class="hint">
+                Sets the Ordinary — the Rites, Gloria, Creed, Eucharistic Prayer, Our Father and
+                Dismissal — between the readings, where each is said
+              </span>
+            </div>
+            <button
+              class="switch" class:on={settings.massPrayers}
+              role="switch" aria-checked={settings.massPrayers}
+              aria-label="Prayers in Mass Mode"
+              onclick={() => set("massPrayers", !settings.massPrayers)}
+            ><span class="knob"></span></button>
+          </div>
+        </section>
+
         <!-- Ministry -->
         <section class="grp">
           <h3>Ministry</h3>
@@ -192,7 +212,10 @@
   @keyframes slide { from { transform: translateX(24px); opacity: 0.6; } }
   .set-head {
     position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between;
-    padding: 20px 22px 14px; background: var(--paper); border-bottom: 1px solid var(--hairline);
+    /* The panel is full-height, so its own header has to clear the status bar
+       when the app is installed to the Home Screen. */
+    padding: calc(20px + var(--safe-top)) 22px 14px;
+    background: var(--paper); border-bottom: 1px solid var(--hairline);
   }
   .set-head h2 { font-family: var(--font-display); font-weight: 560; font-size: 1.5rem; margin: 0; }
   .set-x { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--hairline); background: none; color: var(--muted); display: grid; place-items: center; cursor: pointer; }

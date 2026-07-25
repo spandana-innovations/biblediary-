@@ -7,7 +7,7 @@
    */
   import { onMount } from "svelte";
   import { base } from "$app/paths";
-  import { renderBody, todayISO, nearestDate, getDay, type Day, type Section } from "$lib/api";
+  import { renderBody, todayISO, nearestDate, getDay, type Day, type Section, type CollectionItem } from "$lib/api";
   import { seasonToken, seasonLabel } from "$lib/liturgical";
   import { icons } from "$lib/icons";
   import { settings } from "$lib/settings.svelte";
@@ -59,6 +59,73 @@
     return visible.sort((a, b) => ORDER.indexOf(a.key) - ORDER.indexOf(b.key));
   });
 
+  /**
+   * The Ordinary, slotted into the liturgy where it is actually said.
+   *
+   * Each entry names the proper it precedes; `null` means "after everything
+   * else", which is how the Eucharist onward gets placed — those follow the
+   * Word and have no reading to anchor to. Slugs that the content doesn't
+   * carry are simply skipped, so adding or removing an Order of Mass file
+   * changes the sequence without touching this.
+   */
+  const SLOTS: { slug: string; before: string | null }[] = [
+    { slug: "introductory-rites", before: "first_reading" },
+    { slug: "gloria", before: "first_reading" },
+    { slug: "liturgy-of-the-word", before: "first_reading" },
+    { slug: "the-creed", before: null },
+    { slug: "prayer-of-the-faithful", before: null },
+    { slug: "eucharistic-prayer", before: null },
+    { slug: "communion-rite", before: null },
+    { slug: "concluding-rites", before: null }
+  ];
+
+  const ordinary = $derived((data.ordinary ?? []) as CollectionItem[]);
+
+  type Block =
+    | { kind: "proper"; key: string; title: string; ref: string | null; body: string }
+    | { kind: "ordinary"; key: string; title: string; ref: null; body: string };
+
+  /**
+   * The whole celebration as one ordered list. Without the setting this is
+   * just the propers, so the reading surface is unchanged for anyone who only
+   * wants the readings.
+   */
+  const flow = $derived.by(() => {
+    const propers: Block[] = sections.map((s) => ({
+      kind: "proper" as const, key: s.key, title: s.title, ref: s.ref, body: s.body
+    }));
+    if (!settings.massPrayers || !ordinary.length) return propers;
+
+    const bySlug = new Map(ordinary.map((o) => [String(o.slug ?? ""), o]));
+    const fixed = (slug: string): Block | null => {
+      const o = bySlug.get(slug);
+      return o ? { kind: "ordinary", key: `o:${slug}`, title: o.title, ref: null, body: o.body } : null;
+    };
+
+    // Walk ORDER rather than the propers present, so a day missing its first
+    // reading (weekdays outside Lent have none) still opens with the
+    // Introductory Rites instead of silently dropping them.
+    const out: Block[] = [];
+    const byKey = new Map(propers.map((p) => [p.key, p]));
+    for (const key of ORDER) {
+      for (const slot of SLOTS) {
+        if (slot.before === key) {
+          const b = fixed(slot.slug);
+          if (b) out.push(b);
+        }
+      }
+      const p = byKey.get(key);
+      if (p) out.push(p);
+    }
+    // The Creed onward: everything with no anchoring proper, in listed order.
+    for (const slot of SLOTS) {
+      if (slot.before !== null) continue;
+      const b = fixed(slot.slug);
+      if (b) out.push(b);
+    }
+    return out;
+  });
+
   // Everything expanded by default; collapsing is per-section and remembered
   // only for this visit.
   let collapsed = $state<Record<string, boolean>>({});
@@ -95,7 +162,7 @@
     <p class="mm-empty">No readings are loaded for today yet.</p>
   {:else}
     <header class="mm-head">
-      <span class="mm-cross">{@html icons.cross}</span>
+      <span class="mm-logo"></span>
       <p class="mm-eyebrow">{dateLine(day.date)}</p>
       <h1>{day.celebration ?? dateLine(day.date)}</h1>
       <!-- Season label flanked by a day stepper. -->
@@ -128,12 +195,13 @@
     {/if}
 
     <div class="mm-flow">
-      {#each sections as s (s.key)}
-        <section class="mv" class:closed={collapsed[s.key]}>
+      {#each flow as s (s.key)}
+        <section class="mv" class:closed={collapsed[s.key]} class:fixed={s.kind === "ordinary"}>
           <div class="mv-head">
             <div class="mv-t">
               <p class="mv-label">{#if s.key === "gospel"}<span class="x">✠ </span>{/if}{s.title}</p>
               {#if s.ref}<p class="mv-ref">{s.ref}</p>{/if}
+              {#if s.kind === "ordinary"}<p class="mv-kind">Order of Mass</p>{/if}
             </div>
             <button
               class="mv-toggle"
@@ -160,14 +228,27 @@
   }
   .mm-empty { text-align: center; color: var(--muted); padding: 20vh 20px; font-style: italic; }
 
-  /* Extra head room on narrow screens so the cross clears the floating controls. */
+  /* Extra head room on narrow screens so the mark clears the floating
+     controls, plus the device inset when installed to the Home Screen. */
   .mm-head {
-    text-align: center; padding: clamp(64px, 14vw, 76px) clamp(20px, 5vw, 48px) clamp(20px, 4vw, 34px);
-    max-width: 46rem; margin: 0 auto;
+    text-align: center; max-width: 46rem; margin: 0 auto;
+    padding: calc(clamp(64px, 14vw, 76px) + var(--safe-top))
+             max(clamp(20px, 5vw, 48px), var(--safe-right))
+             clamp(20px, 4vw, 34px)
+             max(clamp(20px, 5vw, 48px), var(--safe-left));
   }
-  @media (min-width: 1024px) { .mm-head { padding-top: clamp(28px, 6vw, 56px); } }
-  .mm-cross { display: grid; place-items: center; color: var(--season-gold); margin-bottom: 12px; }
-  .mm-cross :global(svg) { width: 30px; height: 30px; stroke-width: 1.4; }
+  @media (min-width: 1024px) { .mm-head { padding-top: calc(clamp(28px, 6vw, 56px) + var(--safe-top)); } }
+  /* The house mark rather than a bare cross. Masked, not an <img>, so it takes
+     the season's gold and needs no plate behind it. */
+  .mm-logo {
+    display: block; margin: 0 auto 14px;
+    width: clamp(64px, 16vw, 86px); aspect-ratio: 503 / 560;
+    background: var(--season-gold);
+    -webkit-mask-image: url("/logo-mark.png"); mask-image: url("/logo-mark.png");
+    -webkit-mask-size: contain; mask-size: contain;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    -webkit-mask-position: center; mask-position: center;
+  }
   .mm-eyebrow {
     font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.16em; font-size: 0.7rem;
     font-weight: 600; color: var(--season-gold); margin: 0 0 10px;
@@ -218,6 +299,21 @@
   .mv-label .x { color: var(--season-gold); }
   .mv-ref { font-variant-caps: all-small-caps; letter-spacing: 0.04em; color: var(--muted); margin: 0.2rem 0 0; font-size: 1.05rem; }
 
+  /* The Ordinary is fixed text, the same at every Mass. Setting it on a tinted
+     panel keeps the propers — what makes *this* day this day — visually first,
+     while the responses stay easy to find. */
+  .mv.fixed {
+    border-top: 0; margin: 18px 0 4px; padding: 20px 20px 6px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--season-ink) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--season-ink) 14%, transparent);
+  }
+  .mv.fixed .mv-label { color: var(--season-gold); }
+  .mv-kind {
+    margin: 0.35rem 0 0; font-family: var(--font-ui); font-size: 0.6rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted);
+  }
+
   /* Large circular collapse control, themed to the season. */
   .mv-toggle {
     flex-shrink: 0; width: 46px; height: 46px; border-radius: 50%; cursor: pointer;
@@ -235,8 +331,9 @@
   @keyframes open { from { opacity: 0; transform: translateY(-4px); } }
   .mv-body :global(p) { margin: 0 0 1.05em; }
   .mv-body :global(strong) { font-weight: 640; }
-  /* psalm response set apart */
-  .mv-body :global(p) > :global(strong):only-child {
+  /* psalm response set apart — propers only; in the Ordinary a bold paragraph
+     means the people's part, which is handled below and is not italic. */
+  .mv:not(.fixed) .mv-body :global(p) > :global(strong):only-child {
     display: block; color: var(--season-ink); font-style: italic; font-weight: 560;
   }
   .mv-body.homily {
@@ -297,6 +394,31 @@
     display: block; font-style: normal; font-family: var(--font-ui);
     font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.09em;
     color: var(--season-gold); margin: 1em 0 0.4em;
+  }
+
+  /* --- role emphasis inside the Ordinary --------------------------------
+     The propers mark the people's part with a "Response:" label; the Ordinary
+     has no label, it just sets the part in bold on its own line. Same
+     distinction, different notation, so it needs its own rules or the
+     Introductory Rites would read with all the weight on the priest. */
+  .mv.fixed .mv-body :global(.rubric) {
+    display: block; font-family: var(--font-ui); font-style: normal;
+    font-size: 0.68em; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); margin: 1.4em 0 0.5em;
+  }
+  [data-role="congregation"] .mv.fixed .mv-body :global(p:has(> strong:only-child)) {
+    font-weight: 620; padding: 0.85em 1em; border-radius: 10px; margin-bottom: 1em;
+    background: color-mix(in srgb, var(--season-ink) 12%, transparent);
+    border-left: 4px solid var(--season-ink);
+    color: color-mix(in srgb, var(--season-deep) 85%, var(--ink));
+  }
+  /* the priest's lines are the cue, not the part to say */
+  [data-role="congregation"] .mv.fixed .mv-body :global(p:has(> .celebrant:first-child)) {
+    background: none; border-left: 0; padding: 0; opacity: 0.68; font-size: 0.92em;
+  }
+  [data-role="celebrant"] .mv.fixed .mv-body :global(p:has(> strong:only-child)) {
+    font-size: 0.92em; opacity: 0.8; font-style: italic;
+    padding-left: 1em; border-left: 2px solid color-mix(in srgb, var(--season-ink) 40%, transparent);
   }
 
   /* the celebrant's own notes for the day */

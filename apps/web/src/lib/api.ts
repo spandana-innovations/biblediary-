@@ -61,7 +61,10 @@ const ALLOWED = /^<\/?(?:p|br|em|strong|blockquote|ul|ol|li|h[1-6]|hr)(?:\s*\/)?
 const ALLOWED_SPAN = /^<span class="(?:celebrant|rubric|resp-label|speaker|subhead)">$/;
 
 function sanitize(html: string): string {
-  return html.replace(/<[^>]*>/g, (tag) => {
+  // Comments first, and as whole units. The tag pattern below stops at the
+  // first ">", so a multi-line comment was being chopped mid-way and its
+  // remains left in the copy as visible text.
+  return html.replace(/<!--[\s\S]*?-->/g, "").replace(/<[^>]*>/g, (tag) => {
     if (ALLOWED.test(tag)) return tag;
     if (ALLOWED_SPAN.test(tag) || tag === "</span>") return tag;
     return "";
